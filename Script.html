@@ -1,0 +1,910 @@
+<script>
+  /* =====================================
+     Global Variables -- Script.html
+     ===================================== */
+  let userAvatarUrl = null; // Stores the user's avatar URL after login
+  window.currentUser = null; // Stores the current user's username
+  window.sessionToken = null; // Stores the session token
+
+  /* =====================================
+     Event Listeners Binding on DOM Content Loaded
+     ===================================== */
+
+      /* =====================================
+     For New Customer addition
+     ===================================== */
+  document.addEventListener('DOMContentLoaded', function() {
+    // Bind Add New Customer Button
+    const addCustomerBtn = document.getElementById('addCustomerButton');
+    if (addCustomerBtn) {
+      addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
+    }
+
+    // Bind Save New Customer Button
+    const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
+    if (saveCustomerBtn) {
+      saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
+    }
+     /* =====================================
+     For More Contact Numbers
+     ===================================== */
+    // Bind Add Another Contact Person Button
+    const addContactPersonBtn = document.getElementById('addContactPersonBtn');
+    if (addContactPersonBtn) {
+      addContactPersonBtn.addEventListener('click', addContactPerson);
+    }
+
+    // Event Delegation for Remove Contact Person Buttons
+    const contactPersonsContainer = document.getElementById('contactPersonsContainer');
+    if (contactPersonsContainer) {
+      contactPersonsContainer.addEventListener('click', function(event) {
+        if (event.target && event.target.classList.contains('remove-contact')) {
+          removeContactPerson(event.target);
+        }
+      });
+    }
+  /* =====================================
+     For Work load Lay out
+     ===================================== */
+    const addWorkloadBtn = document.getElementById('addWorkloadBtn');
+      if (addWorkloadBtn) {
+        addWorkloadBtn.addEventListener('click', addWorkloadItem);
+      }
+
+      // Event delegation for removing workload items
+      const workloadContainer = document.getElementById('workloadContainer');
+      if (workloadContainer) {
+        workloadContainer.addEventListener('click', function(e) {
+          if (e.target && e.target.classList.contains('remove-workload')) {
+            removeWorkloadItem(e.target);
+          }
+        });
+      }
+    });
+
+  /* =====================================
+     Button Workings
+     ===================================== */
+    // Bind Modal Response Buttons
+    const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
+    const noAddMoreBtn = document.getElementById('noAddMoreBtn');
+    if (yesAddMoreBtn) {
+      yesAddMoreBtn.addEventListener('click', function() {
+        handleModalResponse(true);
+      });
+    }
+    if (noAddMoreBtn) {
+      noAddMoreBtn.addEventListener('click', function() {
+        handleModalResponse(false);
+      });
+    }
+
+    // Bind Close Error Modal Button
+    const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
+    if (closeErrorModalBtn) {
+      closeErrorModalBtn.addEventListener('click', closeErrorModal);
+    }
+
+    // Bind Login Button to the login Function
+    const loginBtn = document.getElementById('loginButton');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', login);
+    }
+
+    // Bind Remove Image Button to the removeImage Function
+    const removeImageBtn = document.getElementById('removeImageButton');
+    if (removeImageBtn) {
+      removeImageBtn.addEventListener('click', removeImage);
+    }
+
+    // Bind Image Upload Change Event to the previewImage Function
+    const imageUploadInput = document.getElementById('imageUpload');
+    if (imageUploadInput) {
+      imageUploadInput.addEventListener('change', previewImage);
+    }
+
+    // Bind Export Data Button (if you have a dedicated button)
+    const exportBtn = document.getElementById('exportDataButton');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportSalesData);
+    }
+
+    // Forgot Password Modal
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+    const resetButton = document.getElementById('resetPasswordButton');
+    const cancelButton = document.getElementById('cancelResetButton');
+
+    if (forgotLink) {
+      forgotLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        forgotPasswordModal.style.display = 'block';
+      });
+    }
+    if (resetButton) {
+      resetButton.addEventListener('click', function() {
+        const userInput = document.getElementById('resetEmailOrUsername').value.trim();
+        if (!userInput) {
+          showCustomError('Please enter your email or username.');
+          return;
+        }
+        document.getElementById('resetSpinner').style.display = 'inline-block';
+        google.script.run
+          .withSuccessHandler(function(response) {
+            document.getElementById('resetSpinner').style.display = 'none';
+            if (response.success) {
+              alert(response.message);
+              forgotPasswordModal.style.display = 'none';
+            } else {
+              showCustomError(response.message);
+            }
+          })
+          .withFailureHandler(function(error) {
+            document.getElementById('resetSpinner').style.display = 'none';
+            showCustomError('Error sending reset request.');
+          })
+          .forgotPassword(userInput);
+      });
+    }
+    if (cancelButton) {
+      cancelButton.addEventListener('click', function() {
+        forgotPasswordModal.style.display = 'none';
+      });
+    }
+  });
+
+  /* =====================================
+     LOGIN FUNCTIONALITY
+     ===================================== */
+  function login() {
+    // Display the loading spinner
+    document.getElementById('loginSpinner').style.display = 'inline-block';
+
+    // Retrieve user inputs
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Basic Validation
+    if (!username || !password) {
+      showCustomError('Please enter both username and password.');
+      document.getElementById('loginSpinner').style.display = 'none';
+      return;
+    }
+
+    // Call server-side 'checkLogin'
+    google.script.run
+      .withSuccessHandler(function(response) {
+        document.getElementById('loginSpinner').style.display = 'none';
+       
+        if (response.success) {
+          // Hide the login form, show main form
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('mainForm').style.display = 'block';
+          document.getElementById('extractionLinkAfterLogin').style.display = 'block';
+
+          // Hide the extraction link before login
+          const extractionLinkBeforeLogin = document.getElementById('extractionLinkBeforeLogin');
+          if (extractionLinkBeforeLogin) {
+            extractionLinkBeforeLogin.style.display = 'none';
+          }
+
+          // Populate dropdowns
+          populateDropdowns();
+
+          // Show welcome container
+          const welcomeContainer = document.getElementById('welcomeContainer');
+          welcomeContainer.style.display = 'block';
+
+          // Update welcome message
+          const welcomeMsg = document.getElementById('welcomeMessage');
+          welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - Sales Report`;
+
+          // Handle avatar
+          if (response.avatarUrl) {
+            const avatarImg = document.getElementById('salesPersonAvatar');
+            let cleanUrl = response.avatarUrl.trim();
+            avatarImg.src = cleanUrl;
+            avatarImg.style.display = 'inline';
+          }
+
+          // Set the SalesPerson dropdown with the username
+          const salesPersonSelect = document.getElementById('SalesPerson');
+          salesPersonSelect.innerHTML = '';
+          const option = document.createElement('option');
+          option.value = response.token; // token as value
+          option.textContent = response.username;
+          salesPersonSelect.appendChild(option);
+          salesPersonSelect.disabled = true;
+
+          // Store global user info
+          window.currentUser = response.username;
+          window.sessionToken = response.token;
+
+        } else {
+          // Show login error
+          document.getElementById('loginError').style.display = 'block';
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error("Error during login:", error);
+        document.getElementById('loginSpinner').style.display = 'none';
+        showCustomError('An unexpected error occurred. Please try again.');
+      })
+      .checkLogin(username, password);
+  }
+
+  /* =====================================
+     CONTACT PERSON MANAGEMENT
+     ===================================== */
+  function addContactPerson() {
+    const container = document.getElementById('contactPersonsContainer');
+    const contacts = container.getElementsByClassName('contact-person');
+    // Limit to 26
+    if (contacts.length >= 26) {
+      showCustomError('Maximum number of contact persons (26) reached');
+      return;
+    }
+
+    // Clone the first contact-person as a template
+    const template = contacts[0].cloneNode(true);
+    const newIndex = contacts.length;
+
+    // Update letter
+    template.setAttribute('data-index', newIndex);
+    template.querySelector('.contact-letter').textContent = 
+      String.fromCharCode(65 + newIndex);
+
+    // Clear inputs
+    template.querySelectorAll('input').forEach(input => {
+      input.value = '';
+      input.classList.remove('error');
+    });
+
+    // Show remove button
+    const removeBtn = template.querySelector('.remove-contact');
+    removeBtn.style.display = 'block';
+
+    container.appendChild(template);
+  }
+
+  function removeContactPerson(button) {
+    const contactPerson = button.closest('.contact-person');
+    if (contactPerson) {
+      contactPerson.remove();
+      updateContactLetters();
+    }
+  }
+
+  function updateContactLetters() {
+    const contacts = document.querySelectorAll('.contact-person');
+    contacts.forEach((contact, index) => {
+      contact.setAttribute('data-index', index);
+      contact.querySelector('.contact-letter').textContent = 
+        String.fromCharCode(65 + index);
+    });
+  }
+
+  function validateContactPersons() {
+    const contacts = document.querySelectorAll('.contact-person');
+    let isValid = true;
+    
+    contacts.forEach(contact => {
+      const nameInput = contact.querySelector('.contact-name');
+      const postInput = contact.querySelector('.contact-post');
+      const numberInput = contact.querySelector('.contact-number');
+      
+      // Reset errors
+      nameInput.classList.remove('error');
+      postInput.classList.remove('error');
+      numberInput.classList.remove('error');
+      
+      // required fields
+      if (!nameInput.value.trim()) {
+        nameInput.classList.add('error');
+        isValid = false;
+      }
+      if (!postInput.value.trim()) {
+        postInput.classList.add('error');
+        isValid = false;
+      }
+      
+      // phone format
+      if (numberInput.value.trim() && 
+          !/^\+?[\d\s-]{10,}$/.test(numberInput.value.trim())) {
+        numberInput.classList.add('error');
+        isValid = false;
+      }
+    });
+    
+    return isValid;
+  }
+
+  function getContactPersonsData() {
+    const contacts = document.querySelectorAll('.contact-person');
+    return Array.from(contacts).map(contact => ({
+      name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
+      post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
+      number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
+    }));
+  }
+    /* =====================================
+     Work Load Management
+     ===================================== */
+
+    function addWorkloadItem() {
+      const container = document.getElementById('workloadContainer');
+      const items = container.getElementsByClassName('workload-item');
+      // For example, no maximum or you can decide a limit
+      const template = items[0].cloneNode(true);
+      const newIndex = items.length;
+
+      // Update letter or numbering
+      template.setAttribute('data-wl-index', newIndex);
+      template.querySelector('.workload-letter').textContent = (newIndex + 1); // 1-based
+
+      // Clear the inputs in the clone
+      template.querySelectorAll('input').forEach(input => {
+        input.value = '';
+      });
+
+      // Show remove button
+      const removeBtn = template.querySelector('.remove-workload');
+      removeBtn.style.display = 'block';
+
+      // Append
+      container.appendChild(template);
+    }
+
+    function removeWorkloadItem(button) {
+      const wlItem = button.closest('.workload-item');
+      if (wlItem) {
+        wlItem.remove();
+        updateWorkloadIndices();
+      }
+    }
+
+    function updateWorkloadIndices() {
+      const items = document.querySelectorAll('.workload-item');
+      items.forEach((item, index) => {
+        item.setAttribute('data-wl-index', index);
+        item.querySelector('.workload-letter').textContent = (index + 1);
+      });
+    }
+
+    // Gather the workload data
+    function getWorkloadData() {
+      const items = document.querySelectorAll('.workload-item');
+      return Array.from(items).map(item => ({
+        competitor: sanitizeInput(item.querySelector('.wl-competitor').value),
+        competitorModel: sanitizeInput(item.querySelector('.wl-competitorModel').value),
+        dailyWorkload: sanitizeInput(item.querySelector('.wl-dailyWorkload').value),
+        perTestCost: sanitizeInput(item.querySelector('.wl-perTestCost').value)
+      }));
+    }
+
+  /* =====================================
+     DATE VALIDATION
+     ===================================== */
+  function validateDates() {
+    const visitDate = new Date(document.getElementById('dateOfVisit').value);
+    const nextVisit = document.getElementById('nextVisit').value ? 
+                     new Date(document.getElementById('nextVisit').value) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (visitDate > today) {
+      showCustomError('Visit date cannot be in the future');
+      return false;
+    }
+    if (nextVisit) {
+      if (nextVisit < today) {
+        showCustomError('Next visit date cannot be in the past');
+        return false;
+      }
+      if (nextVisit <= visitDate) {
+        showCustomError('Next visit date must be after visit date');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /* =====================================
+     DROPDOWNS & LOADERS
+     ===================================== */
+  function populateDropdowns() {
+    const dropdowns = ['Region', 'City', 'Customer', 'Product', 'Department', 'SalesPerson', 'Flags', 'AnalyzerModel'];
+    
+    dropdowns.forEach(function(dd) {
+      showLoadingDots(`${dd.toLowerCase()}Loading`, true);
+      google.script.run
+        .withSuccessHandler(function(data) {
+          populateDropdown(dd, data);
+          showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+
+          if (dd === 'City' || dd === 'Customer' || dd === 'AnalyzerModel') {
+            document.getElementById(dd).disabled = true;
+          }
+
+          // Region -> filter city & customers
+          if (dd === 'Region') {
+            const regionSelect = document.getElementById('Region');
+            regionSelect.addEventListener('change', function() {
+              filterCityByRegion();
+              filterCustomersByRegion();
+            });
+          }
+          // Product -> filter analyzers
+          if (dd === 'Product') {
+            const productSelect = document.getElementById('Product');
+            productSelect.addEventListener('change', filterAnalyzerByProduct);
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error(`Failed to populate ${dd}:`, error);
+          showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+          showCustomError(`Failed to load ${dd} data. Please try refreshing the page.`);
+        })
+        .getDropdownDataCached(dd);
+    });
+  }
+
+  function populateDropdown(id, data) {
+    const select = document.getElementById(id);
+    if (!select) {
+      console.error('Dropdown element not found:', id);
+      return;
+    }
+    
+    try {
+      select.innerHTML = '<option value="">Select</option>';
+      if (data && Array.isArray(data) && data.length > 0) {
+        data.forEach(function(row) {
+          if (row && row[0]) {
+            const option = document.createElement('option');
+            option.value = sanitizeInput(row[0]);
+            option.textContent = sanitizeInput(row[0]);
+            select.appendChild(option);
+          }
+        });
+      }
+    } catch (error) {
+      console.error(`Error populating dropdown ${id}:`, error);
+      showCustomError(`Error loading ${id} options`);
+    }
+  }
+
+  function filterCityByRegion() {
+    const region = document.getElementById('Region').value;
+    const citySelect = document.getElementById('City');
+    const customerSelect = document.getElementById('Customer');
+    
+    if (region) {
+      showLoadingDots('cityLoading', true);
+      google.script.run
+        .withSuccessHandler(function(cities) {
+          populateDropdown('City', cities);
+          citySelect.disabled = false;
+          showLoadingDots('cityLoading', false);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load cities:', error);
+          showLoadingDots('cityLoading', false);
+          showCustomError('Failed to load cities. Please try again.');
+        })
+        .getCityByRegion(region);
+    } else {
+      clearDropdown('City');
+      clearDropdown('Customer');
+      citySelect.disabled = true;
+      customerSelect.disabled = true;
+      showLoadingDots('cityLoading', false);
+    }
+  }
+
+  function filterAnalyzerByProduct() {
+    const product = document.getElementById('Product').value;
+    const analyzerSelect = document.getElementById('AnalyzerModel');
+    
+    if (product) {
+      showLoadingDots('analyzerLoading', true);
+      google.script.run
+        .withSuccessHandler(function(analyzers) {
+          populateDropdown('AnalyzerModel', analyzers);
+          analyzerSelect.disabled = false;
+          showLoadingDots('analyzerLoading', false);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load analyzers:', error);
+          showLoadingDots('analyzerLoading', false);
+          showCustomError('Failed to load analyzer models. Please try again.');
+        })
+        .getAnalyzersByProduct(product);
+    } else {
+      clearDropdown('AnalyzerModel');
+      analyzerSelect.disabled = true;
+      showLoadingDots('analyzerLoading', false);
+    }
+  }
+
+  function filterCustomersByRegion() {
+    const region = document.getElementById('Region').value;
+    const customerSelect = document.getElementById('Customer');
+    
+    if (region) {
+      showLoadingDots('customerLoading', true);
+      google.script.run
+        .withSuccessHandler(function(customers) {
+          populateDropdown('Customer', customers);
+          customerSelect.disabled = false;
+          showLoadingDots('customerLoading', false);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load customers:', error);
+          showLoadingDots('customerLoading', false);
+          showCustomError('Failed to load customers. Please try again.');
+        })
+        .getCustomersByRegion(region);
+    } else {
+      clearDropdown('Customer');
+      customerSelect.disabled = true;
+      showLoadingDots('customerLoading', false);
+    }
+  }
+
+  function clearDropdown(id) {
+    const select = document.getElementById(id);
+    if (select) {
+      select.innerHTML = '<option value="">Select</option>';
+      select.disabled = true;
+    }
+  }
+
+  function showLoadingDots(id, show) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.display = show ? 'inline-block' : 'none';
+    }
+  }
+  
+  function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input
+      .trim()
+      .replace(/[<>]/g, '')
+      .replace(/[&]/g, 'and')
+      .replace(/['"]/g, '')
+      .substr(0, 1000);
+  }
+
+  /* =====================================
+     FORM VALIDATION & SUBMISSION
+     ===================================== */
+  document.getElementById('dataForm').onsubmit = function(e) {
+    e.preventDefault();
+    document.getElementById('submitSpinner').style.display = 'inline-block';
+
+    // Validate required fields
+    const requiredFields = [
+      'dateOfVisit','visitType','Region','City','Customer',
+      'Department','Product','AnalyzerModel','Flags','VISIT_DESCRIPTION'
+    ];
+    let isValid = true;
+    let firstInvalid = null;
+
+    requiredFields.forEach(function(id) {
+      const field = document.getElementById(id);
+      if (field && !field.value) {
+        field.style.border = "2px solid red";
+        if (!firstInvalid) firstInvalid = field;
+        isValid = false;
+      } else if (field) {
+        field.style.border = "";
+      }
+    });
+
+    // Validate dates
+    if (!validateDates()) {
+      isValid = false;
+    }
+
+    // Validate contact persons
+    if (!validateContactPersons()) {
+      isValid = false;
+      showCustomError('Please fill in all required contact person fields correctly');
+    }
+
+    if (!isValid) {
+      document.getElementById('submitSpinner').style.display = 'none';
+      if (firstInvalid) firstInvalid.focus();
+      return;
+    }
+
+    // Gather the data
+    const imageFile = document.getElementById('imageUpload').files[0];
+
+    // Finalize submission after reading image
+    const finalizeSubmission = function(imageDataUrl) {
+      const formObject = {
+        dateOfVisit: sanitizeInput(document.getElementById('dateOfVisit').value),
+        visitType: sanitizeInput(document.getElementById('visitType').value),
+        Region: sanitizeInput(document.getElementById('Region').value),
+        City: sanitizeInput(document.getElementById('City').value),
+        Customer: sanitizeInput(document.getElementById('Customer').value),
+        newCustomer: sanitizeInput(document.getElementById('newCustomer').value),
+        Department: sanitizeInput(document.getElementById('Department').value),
+        SalesPerson: sanitizeInput(window.currentUser),
+        Product: sanitizeInput(document.getElementById('Product').value),
+        AnalyzerModel: sanitizeInput(document.getElementById('AnalyzerModel').value),
+        Flags: sanitizeInput(document.getElementById('Flags').value),
+        VISIT_DESCRIPTION: sanitizeInput(document.getElementById('VISIT_DESCRIPTION').value),
+        IMAGE: imageDataUrl || "",
+        contactPersons: getContactPersonsData(),
+        nextVisit: sanitizeInput(document.getElementById('nextVisit').value) || null,
+
+        // New workload fields
+        workloads: getWorkloadData(),
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          document.getElementById('submitSpinner').style.display = 'none';
+          showConfirmationMessage(response);
+          showCustomModal();
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error submitting form:', error);
+          document.getElementById('submitSpinner').style.display = 'none';
+          showCustomError('Failed to submit the form. Please try again.');
+        })
+        .processForm(formObject, window.currentUser, window.sessionToken);
+    };
+
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        finalizeSubmission(e.target.result);
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      finalizeSubmission("");
+    }
+  };
+
+  function resetForm() {
+    document.getElementById('dataForm').reset();
+    document.getElementById('newCustomerField').style.display = 'none';
+
+    const container = document.getElementById('contactPersonsContainer');
+    const contacts = container.getElementsByClassName('contact-person');
+    while (contacts.length > 1) {
+      contacts[contacts.length - 1].remove();
+    }
+    contacts[0].querySelectorAll('input').forEach(input => {
+      input.value = '';
+      input.classList.remove('error');
+    });
+    removeImage();
+  }
+
+  /* =====================================
+     MODALS & CONFIRMATIONS
+     ===================================== */
+  function showCustomError(msg) {
+    document.getElementById('errorMessage').textContent = msg;
+    document.getElementById('errorModal').style.display = 'flex';
+  }
+
+  function closeErrorModal() {
+    document.getElementById('errorModal').style.display = 'none';
+  }
+
+  function showConfirmationMessage(msg) {
+    const cm = document.getElementById('confirmationMessage');
+    cm.textContent = msg;
+    cm.classList.add('show');
+    setTimeout(function() {
+      cm.classList.add('hide');
+      setTimeout(function(){
+        cm.classList.remove('show','hide');
+      }, 500);
+    }, 3000);
+  }
+
+  function showCustomModal() {
+    const cModal = document.getElementById('customModal');
+    if (cModal) cModal.style.display = 'flex';
+  }
+
+  function handleModalResponse(addMore) {
+    if (addMore) {
+      resetForm();
+      document.getElementById('newCustomerField').style.display = 'none';
+      document.querySelectorAll('.error').forEach(element => element.classList.remove('error'));
+      document.querySelectorAll('[style*="border"]').forEach(element => {
+        element.style.border = '';
+      });
+    } else {
+      window.location.reload();
+    }
+    document.getElementById('customModal').style.display = 'none';
+  }
+
+  /* =====================================
+     IMAGE HANDLING
+     ===================================== */
+  function previewImage() {
+    const fileInput = document.getElementById('imageUpload');
+    const previewTag = document.getElementById('previewImageTag');
+    const previewDiv = document.getElementById('imagePreview');
+    const file = fileInput.files[0];
+
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showCustomError('Image size should not exceed 5MB');
+        removeImage();
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        showCustomError('Please upload only image files');
+        removeImage();
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewTag.src = e.target.result;
+        previewDiv.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeImage() {
+    const fileInput = document.getElementById('imageUpload');
+    const previewTag = document.getElementById('previewImageTag');
+    const previewDiv = document.getElementById('imagePreview');
+    fileInput.value = '';
+    previewTag.src = '';
+    previewDiv.style.display = 'none';
+  }
+
+  /* =====================================
+     TOGGLE ADD NEW CUSTOMER FORM
+     ===================================== */
+  function toggleAddCustomerForm() {
+    const form = document.getElementById('addCustomerManualForm');
+    if (form) {
+      form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+      if (form.style.display === 'block') {
+        document.getElementById('addCustRegionSelect').focus();
+      }
+    }
+  }
+
+  /* =====================================
+     SUBMIT ADD NEW CUSTOMER FORM
+     ===================================== */
+  function submitAddCustomerForm() {
+    const region = document.getElementById('addCustRegionSelect').value;
+    const city = document.getElementById('addCustCityInput').value.trim();
+    const customerName = document.getElementById('addCustNameInput').value.trim();
+
+    if (!region) {
+      showCustomError('Please select a region.');
+      return;
+    }
+    if (!customerName) {
+      showCustomError('Please enter a customer name.');
+      return;
+    }
+
+    const newCustomerData = {
+      region: sanitizeInput(region),
+      city: sanitizeInput(city),
+      customerName: sanitizeInput(customerName)
+    };
+
+    const saveButton = document.getElementById('saveNewCustomerButton');
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+    }
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        showConfirmationMessage(response);
+        resetAddCustomerForm();
+        populateDropdowns();
+        if (saveButton) {
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save New Customer';
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Error adding new customer:', error);
+        showCustomError('Failed to add new customer. Please try again.');
+        if (saveButton) {
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save New Customer';
+        }
+      })
+      .addNewCustomerWithCity(newCustomerData.region, newCustomerData.city, newCustomerData.customerName, window.currentUser, window.sessionToken);
+  }
+
+  function resetAddCustomerForm() {
+    const form = document.getElementById('addCustomerManualForm');
+    if (form) {
+      form.reset();
+      form.style.display = 'none';
+    }
+  }
+
+  /* =====================================
+     INITIALIZATION ON PAGE LOAD
+     ===================================== */
+  window.onload = function() {
+    updateTimestamp();
+    setInterval(updateTimestamp, 1000);
+
+    const dateOfVisit = document.getElementById('dateOfVisit');
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    dateOfVisit.max = formatDate(today);
+    dateOfVisit.min = formatDate(thirtyDaysAgo);
+
+    const nextVisit = document.getElementById('nextVisit');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    nextVisit.min = formatDate(tomorrow);
+  };
+
+  function updateTimestamp() {
+    const now = new Date();
+    const formatted = now.toLocaleString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long',
+      day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    document.getElementById('timestamp').textContent = 'Current Date & Time: ' + formatted;
+  }
+
+  function formatDate(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  /* =====================================
+     EXPORT FUNCTIONS
+     ===================================== */
+  function exportSalesData() {
+    if (!window.currentUser || !window.sessionToken) {
+      showCustomError('You must be logged in to export data.');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to export your sales data?')) {
+      return;
+    }
+    const exportBtn = document.getElementById('exportDataButton');
+    exportBtn.disabled = true;
+    exportBtn.textContent = 'Exporting...';
+
+    google.script.run
+      .withSuccessHandler(function(downloadUrl) {
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank');
+          showConfirmationMessage('Your sales data has been exported successfully.');
+        } else {
+          showCustomError('No data available for export.');
+        }
+        exportBtn.disabled = false;
+        exportBtn.textContent = 'Export My Sales Data';
+      })
+      .withFailureHandler(function(error) {
+        console.error("Export Error:", error);
+        showCustomError('Failed to export data. Please try again.');
+        exportBtn.disabled = false;
+        exportBtn.textContent = 'Export My Sales Data';
+      })
+      .exportSalesPersonDataAsCSV(window.currentUser, window.sessionToken);
+  }
+</script>

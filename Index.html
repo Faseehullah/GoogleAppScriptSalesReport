@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- Include the external Style.html for CSS -->
+  <?!= include('Style'); ?>
+</head>
+<body>
+  <!-- =====================================
+       Custom Modal for Post-Submission Actions
+       ===================================== -->
+  <div id="customModal">
+    <div id="customModalContent">
+      <p>Data successfully submitted. Do you want to add new logs?</p>
+      <!-- Buttons to handle user response -->
+      <button id="yesAddMoreBtn">Yes</button>
+      <button id="noAddMoreBtn">No</button>
+    </div>
+  </div>
+
+  <!-- =====================================
+       Header Section
+       ===================================== -->
+  <div class="header">
+    <img src="https://nextekhealthcare.com/wp-content/uploads/2024/07/Logo-Red-Black-Png-1.png" alt="Company Logo">
+    <h1>Nextek Healthcare - Sales Report</h1>
+    <div class="timestamp" id="timestamp">CURRENT DATE & TIME</div>
+  </div>
+
+  <!-- =====================================
+       Welcome Container (Displayed After Login)
+       ===================================== -->
+  <div id="welcomeContainer" style="display:none;">
+    <p id="welcomeMessage"></p>
+    <img id="salesPersonAvatar" class="avatar" src="" alt="Avatar">
+  </div>
+  
+  <!-- =====================================
+       Extraction Link Before Login
+       ===================================== -->
+  <div id="extractionLinkBeforeLogin" style="text-align: center; margin-top: 80px;">
+    <a href="?page=extraction" target="_blank">Sales Data Extraction</a>
+  </div>
+
+  <!-- =====================================
+       Login Form (Visible Before Login)
+       ===================================== -->
+  <div class="login-container" id="loginForm">
+    <h2>Login</h2>
+    <!-- Username Input -->
+    <input type="text" id="username" placeholder="Username" aria-label="Username">
+    <!-- Password Input -->
+    <input type="password" id="password" placeholder="Password" aria-label="Password">
+    <!-- Login Button -->
+    <button id="loginButton">Login</button>
+    <!-- Spinner to indicate login processing -->
+    <div class="spinner" id="loginSpinner"></div>
+    <!-- Error Message (Hidden by Default) -->
+    <p class="login-error" id="loginError">Invalid username or password</p>
+
+    <!-- Forgot Password Link -->
+    <p style="text-align:center;">
+      <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+    </p>
+  </div>
+
+  <!-- =====================================
+       Forgot Password Modal
+       ===================================== -->
+  <div id="forgotPasswordModal" style="display:none;">
+    <div id="forgotPasswordContent">
+      <h3>Reset Password</h3>
+      <input type="text" id="resetEmailOrUsername" placeholder="Enter your email or username">
+      <button id="resetPasswordButton">Send Reset</button>
+      <button id="cancelResetButton">Cancel</button>
+      <div class="spinner" id="resetSpinner"></div>
+    </div>
+  </div>
+
+  <!-- =====================================
+       Extraction Links After Login
+       ===================================== -->
+  <div id="extractionLinkAfterLogin" style="text-align: center; margin-top: 20px; display: none;">
+    <a href="?page=extraction" target="_blank">Download Visit Record</a>
+    |
+    <a href="?page=extractionreport" target="_blank">View Extraction Report</a>
+  </div>
+
+  <!-- =====================================
+       Main Form Container (Visible After Login)
+       ===================================== -->
+  <div class="main-form-container" id="mainForm">
+    
+    <!-- =====================================
+         Add New Customer (Manual) Button
+         ===================================== -->
+    <button id="addCustomerButton">Add New Customer (Manual)</button>
+
+    <!-- =====================================
+         Add Customer Manual Form (Hidden by Default)
+         ===================================== -->
+    <form id="addCustomerManualForm" style="display:none;">
+      <h3>Add New Customer</h3>
+      
+      <!-- Region Selection -->
+      <div class="form-group">
+        <label for="addCustRegionSelect">Region:</label>
+        <select id="addCustRegionSelect" required>
+          <option value="">Select Region</option>
+          <option value="SOUTH">SOUTH</option>
+          <option value="NORTH">NORTH</option>
+          <option value="KPK">KPK</option>
+          <option value="CENTRAL">CENTRAL</option>
+        </select>
+      </div>
+      
+      <!-- City Input -->
+      <div class="form-group">
+        <label for="addCustCityInput">City:</label>
+        <input type="text" id="addCustCityInput" placeholder="Enter city" required>
+      </div>
+      
+      <!-- Customer Name Input -->
+      <div class="form-group">
+        <label for="addCustNameInput">Customer Name:</label>
+        <input type="text" id="addCustNameInput" placeholder="Enter customer name" required>
+      </div>
+      
+      <!-- Save New Customer Button -->
+      <button type="button" id="saveNewCustomerButton">Save New Customer</button>
+    </form>
+
+    <!-- =====================================
+         Submit Sales Log Form
+         ===================================== -->
+    <h2 style="margin-top: 20px;">Submit Sales Log</h2>
+    
+    <form id="dataForm">
+      <!-- 1) DATE OF VISIT -->
+      <div class="form-group">
+        <label for="dateOfVisit" class="required">Date of Visit:</label>
+        <input type="date" id="dateOfVisit" required aria-required="true">
+      </div>
+
+      <!-- 2) VISIT TYPE DROPDOWN -->
+      <div class="form-group">
+        <label for="visitType" class="required">Visit Type:</label>
+        <select id="visitType" required aria-required="true">
+          <option value="">Select</option>
+          <option value="NEW SALES CALL">NEW SALES CALL</option>
+          <option value="TECHNICAL BREIFING">TECHNICAL BREIFING</option>
+          <option value="FOLLOW UP">FOLLOW UP</option>
+          <option value="PAYMENT ISSUE">PAYMENT ISSUE</option>
+        </select>
+      </div>
+
+      <!-- 3) Region Selection -->
+      <div class="form-group">
+        <label for="Region" class="required">Region:</label>
+        <select id="Region" required aria-required="true">
+          <!-- Options will be populated dynamically -->
+        </select>
+      </div>
+
+      <!-- 4) City Selection -->
+      <div class="form-group">
+        <label for="City" class="required">City:</label>
+        <div class="input-container">
+          <select id="City" disabled required aria-required="true">
+            <!-- Options based on selected Region -->
+          </select>
+          <span class="loading-dots" id="cityLoading"></span>
+        </div>
+      </div>
+
+      <!-- 5) Customer Selection -->
+      <div class="form-group">
+        <label for="Customer" class="required">Customer Name:</label>
+        <div class="input-container">
+          <select id="Customer" disabled required aria-required="true">
+            <!-- Options based on selected Region -->
+          </select>
+          <span class="loading-dots" id="customerLoading"></span>
+        </div>
+      </div>
+
+      <!-- New Customer Field (Displayed If 'Add New Customer' Is Selected) -->
+      <div class="form-group" id="newCustomerField" style="display:none;">
+        <label for="newCustomer">New Customer Name:</label>
+        <input type="text" id="newCustomer" placeholder="Enter new customer name">
+      </div>
+
+      <!-- 6) Department Selection -->
+      <div class="form-group">
+        <label for="Department" class="required">Department:</label>
+        <select id="Department" required aria-required="true">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- 7) SalesPerson Selection (Populated After Login) -->
+      <div class="form-group">
+        <label for="SalesPerson" class="required">Sales Person:</label>
+        <select id="SalesPerson" disabled required aria-required="true">
+          <!-- Populated with the logged-in user's name -->
+        </select>
+      </div>
+
+      <!-- 8) Product Selection -->
+      <div class="form-group">
+        <label for="Product" class="required">Product:</label>
+        <select id="Product" required aria-required="true">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- 9) Analyzer Model Selection -->
+      <div class="form-group">
+        <label for="AnalyzerModel" class="required">Analyzer Model:</label>
+        <div class="input-container">
+          <select id="AnalyzerModel" disabled required aria-required="true">
+            <!-- Options based on selected Product -->
+          </select>
+          <span class="loading-dots" id="analyzerLoading" style="display:none;"></span>
+        </div>
+      </div>
+
+      <!-- 10) Flags Selection -->
+      <div class="form-group">
+        <label for="Flags" class="required">Flags:</label>
+        <select id="Flags" required aria-required="true">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- 11) Contact Persons Section -->
+      <div class="form-group contact-persons-section">
+        <label class="required">Contact Persons:</label>
+        <div id="contactPersonsContainer">
+          <!-- Contact Person Template (Cloned for more) -->
+          <div class="contact-person" data-index="0">
+            <div class="contact-header">
+              <h4>Contact Person <span class="contact-letter">A</span></h4>
+              <button type="button" class="remove-contact" style="display: none;">×</button>
+            </div>
+            <div class="contact-fields">
+              <!-- Name -->
+              <div class="form-group">
+                <label>Name:</label>
+                <input type="text" class="contact-name" placeholder="Enter name" required>
+              </div>
+              <!-- Post -->
+              <div class="form-group">
+                <label>Post:</label>
+                <input type="text" class="contact-post" placeholder="Enter designation" required>
+              </div>
+              <!-- Contact Number -->
+              <div class="form-group">
+                <label>Contact Number:</label>
+                <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Button to Add Another Contact Person -->
+        <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
+      </div>
+
+      <!-- 12) Next Visit Date -->
+      <div class="form-group">
+        <label for="nextVisit">Next Visit Date (if required):</label>
+        <input type="date" id="nextVisit" aria-label="Next Visit Date">
+      </div>
+
+      <!-- 13) Visit Details -->
+      <div class="form-group">
+        <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
+        <textarea id="VISIT_DESCRIPTION" required aria-required="true" placeholder="Enter visit details"></textarea>
+      </div>
+
+      <!-- 14) Workload Information (optional) -->
+     <!-- Workload Section -->
+      <div class="form-group workload-section">
+        <label>Workload Information:</label>
+        <div id="workloadContainer">
+          <!-- One Workload Row (template) -->
+          <div class="workload-item" data-wl-index="0">
+            <div class="workload-header">
+              <h4>Workload <span class="workload-letter">1</span></h4>
+              <button type="button" class="remove-workload" style="display: none;">×</button>
+            </div>
+            <div class="workload-fields">
+              <div class="form-group">
+                <label>Competitor:</label>
+                <input type="text" class="wl-competitor" placeholder="Competitor Name/Brand">
+              </div>
+              <div class="form-group">
+                <label>Competitor Model:</label>
+                <input type="text" class="wl-competitorModel" placeholder="Model">
+              </div>
+              <div class="form-group">
+                <label>Daily Work Load:</label>
+                <input type="number" class="wl-dailyWorkload" placeholder="Estimated daily workload" min="0">
+              </div>
+              <div class="form-group">
+                <label>Per Test Cost:</label>
+                <input type="number" class="wl-perTestCost" placeholder="Cost per test" min="0" step="0.01">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Button to Add Another Workload Row -->
+        <button type="button" id="addWorkloadBtn" class="add-workload-btn">+ Add Another Workload</button>
+      </div>
+
+
+      <!-- 15) File Upload -->
+      <div class="form-group">
+        <label for="imageUpload">Upload Image (optional):</label>
+        <input type="file" id="imageUpload" accept="image/*" capture="camera">
+      </div>
+      <!-- Image Preview and Remove Button -->
+      <div class="form-group image-preview" id="imagePreview" style="display:none;">
+        <img id="previewImageTag" src="" alt="Image Preview">
+        <button type="button" id="removeImageButton">Remove Image</button>
+      </div>
+
+      <!-- Submit Button and Spinner -->
+      <div class="form-group">
+        <button type="submit">SUBMIT</button>
+        <div class="spinner" id="submitSpinner"></div>
+      </div>
+    </form>
+
+    <!-- =====================================
+         Error Modal
+         ===================================== -->
+    <div id="errorModal">
+      <div id="errorModalContent">
+        <p id="errorMessage"></p>
+        <button id="closeErrorModalBtn">Close</button>
+      </div>
+    </div>
+
+    <!-- =====================================
+         Confirmation Message
+         ===================================== -->
+    <div class="confirmation-message" id="confirmationMessage">Data successfully submitted!</div>
+  </div>
+
+  <!-- =====================================
+       Footer Section
+       ===================================== -->
+  <footer>
+    Fas_Reporting_Version_2.2.1
+    <div style="margin-top: 10px;">
+      <a href="?page=extraction" target="_blank">Sales Data Extraction</a> |
+      <a href="?page=extractionreport" target="_blank">View Extraction Report</a>
+    </div>
+  </footer>
+
+  <!-- Include the external Script.html for JavaScript -->
+  <?!= include('Script'); ?>
+</body>
+</html>
