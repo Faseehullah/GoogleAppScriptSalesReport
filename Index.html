@@ -233,7 +233,15 @@
         </select>
       </div>
 
-      <!-- 11) Contact Persons Section -->
+      <!-- 12) Category Selection -->
+      <div class="form-group">
+        <label for="Category" class="required">Category:</label>
+        <select id="Category" disabled required aria-required="true">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- 13) Contact Persons Section -->
       <div class="form-group contact-persons-section">
         <label class="required">Contact Persons:</label>
         <div id="contactPersonsContainer">
@@ -266,19 +274,19 @@
         <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
       </div>
 
-      <!-- 12) Next Visit Date -->
+      <!-- 14) Next Visit Date -->
       <div class="form-group">
         <label for="nextVisit">Next Visit Date (if required):</label>
         <input type="date" id="nextVisit" aria-label="Next Visit Date">
       </div>
 
-      <!-- 13) Visit Details -->
+      <!-- 15) Visit Details -->
       <div class="form-group">
         <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
         <textarea id="VISIT_DESCRIPTION" required aria-required="true" placeholder="Enter visit details"></textarea>
       </div>
 
-      <!-- 14) Workload Information (optional) -->
+      <!-- 16) Workload Information (optional) -->
      <!-- Workload Section -->
       <div class="form-group workload-section">
         <label>Workload Information:</label>
@@ -314,7 +322,7 @@
       </div>
 
 
-      <!-- 15) File Upload -->
+      <!-- 17) File Upload -->
       <div class="form-group">
         <label for="imageUpload">Upload Image (optional):</label>
         <input type="file" id="imageUpload" accept="image/*" capture="camera">

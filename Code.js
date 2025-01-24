@@ -12,7 +12,7 @@ const Config = {
       // One row per contact (ID, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT)
       CONTACTS: "CONTACTS!A2:E2",
       // One row per new workload (ID, Competitor, Competitor Model, Daily Work Load, Estimated Per Test Cost)
-      WORKLOAD: "WORKLOAD!A2:F2",
+      WORKLOAD: "WORKLOAD!A2:G",
       // Dropdown Ranges (unchanged)
       REGION: "DATASHEETS!L2:L6",
       CITY: "DATASHEETS!J2:J400",
@@ -187,7 +187,7 @@ function checkLogin(username, password) {
       if (userLoginAttempts[username]) {
         delete userLoginAttempts[username];
       }
-      
+      AuditLogger.log('Successful Login', username, { timestamp: new Date().toISOString() });
       return {
         success: true,
         message: "Login successful",
@@ -203,10 +203,12 @@ function checkLogin(username, password) {
         userLoginAttempts[username].attempts += 1;
         userLoginAttempts[username].lastAttempt = currentTime;
       }
+      AuditLogger.log('Failed Login Attempt', username, { timestamp: new Date().toISOString() });
       return { success: false, message: "Invalid username or password" };
     }
   } catch (error) {
     ErrorLogger.log('checkLogin', error, { username });
+    AuditLogger.log('Login Error', username, { error: error.message });AuditLogger.log('Login Error', username, { error: error.message });
     return { success: false, message: "An error occurred during login" };
   }
 }
@@ -285,7 +287,7 @@ Please login and change it as soon as possible.
 Regards,
 Your Company`
     );
-
+    AuditLogger.log('Password Reset', foundRow[0], { email: userEmail });
     return { success: true, message: "A new password has been sent to your email." };
   } catch (error) {
     ErrorLogger.log('forgotPassword', error, { emailOrUsername });
@@ -334,7 +336,8 @@ function getDropdownDataCached(name) {
       'SalesPerson': 'SALESPERSON',
       'Product': 'PRODUCT',
       'Flags': 'FLAGS',
-      'AnalyzerModel': 'ANALYZER_MODEL'
+      'AnalyzerModel': 'ANALYZER_MODEL',
+      'Customer': 'CUSTOMERS'
     };
     
     const range = Config.SPREADSHEET.RANGES[rangeMap[name]];
@@ -343,7 +346,7 @@ function getDropdownDataCached(name) {
     }
     
     const data = readRecord(range);
-    cache.put(cacheKey, JSON.stringify(data), 21600); // Cache for 6 hours
+    cache.put(cacheKey, JSON.stringify(data), 180); // Cache for 3 mins
     return data;
   } catch (error) {
     ErrorLogger.log('getDropdownDataCached', error, { name });
@@ -375,6 +378,7 @@ function getCityByRegion(region) {
     return [];
   }
 }
+
 
 function getAnalyzersByProduct(product) {
   try {
@@ -459,11 +463,12 @@ function createMultipleWorkloadRecords(id, workloads) {
     if (!Array.isArray(workloads) || workloads.length === 0) return;
 
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("WORKLOAD");
-    // Suppose columns = A: ID, B:Competitor, C:CompetitorModel,
-    //                  D:DailyWorkload, E:PerTestCost, F:Timestamp
+    // Suppose columns = A: ID, B:Customer , C:Competitor, D:CompetitorModel,
+    //                  E:DailyWorkload, F:PerTestCost, G:Timestamp
 
     const rows = workloads.map(wl => [
       id,
+      customer,
       wl.competitor || "",
       wl.competitorModel || "",
       wl.dailyWorkload || "",
@@ -487,7 +492,7 @@ function createMultipleWorkloadRecords(id, workloads) {
  * For each contact person, append a row to the CONTACTS sheet:
  *  [ ID, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT ]
  */
-function createContactsRecords(id, customerName, contactPersons) {
+function createContactsRecords(id, customerName, contactPersons, username) {
   try {
     if (!Array.isArray(contactPersons) || contactPersons.length === 0) return;
 
@@ -623,15 +628,17 @@ function processForm(formObject, currentUser, token) {
     createContactsRecords(
       uniqueId,
       formObject.Customer,
-      formObject.contactPersons
+      formObject.contactPersons,
+      currentUser
     );
 
     // 10) Create workload record (if competitor info is provided)
     createMultipleWorkloadRecords(uniqueId, formObject.workloads);
-
+    AuditLogger.log('Form Submission', currentUser, { id: uniqueId, customer: formObject.Customer });
     return "Data successfully submitted by Sales Person: " + currentUser;
   } catch (error) {
     ErrorLogger.log('processForm', error, { formObject, currentUser });
+    AuditLogger.log('Form Submission Failure', currentUser, { error: error.message });
     return "Error: " + error.message;
   }
 }
@@ -770,7 +777,8 @@ function exportSalesPersonDataAsCSV(salesPersonName, username, token) {
              .timeBased()
              .after(60 * 60 * 1000)
              .create();
-    
+
+    AuditLogger.log('Data Export', username, { salesPersonName, fileName: `${salesPersonName}_Data.csv`, downloadUrl });
     return downloadUrl;
   } catch (error) {
     ErrorLogger.log('exportSalesPersonDataAsCSV', error, { salesPersonName, username });
