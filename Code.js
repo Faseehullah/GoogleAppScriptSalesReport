@@ -12,7 +12,7 @@ const Config = {
       // One row per contact (ID, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT)
       CONTACTS: "CONTACTS!A2:E2",
       // One row per new workload (ID, Competitor, Competitor Model, Daily Work Load, Estimated Per Test Cost)
-      WORKLOAD: "WORKLOAD!A2:G",
+      WORKLOAD: "WORKLOAD!A2:G2",
       // Dropdown Ranges (unchanged)
       REGION: "DATASHEETS!L2:L6",
       CITY: "DATASHEETS!J2:J400",
@@ -28,7 +28,7 @@ const Config = {
     }
   },
   SECURITY: {
-    SESSION_DURATION_SECONDS: 150, // 2.5 minutes
+    SESSION_DURATION_SECONDS: 600, // 10 minutes
     MAX_LOGIN_ATTEMPTS: 5,
     LOGIN_TIMEOUT_SECONDS: 300 // 5 minutes
   },

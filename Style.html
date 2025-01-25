@@ -163,12 +163,25 @@
     margin-bottom: 20px;
     position: relative;
   }
+
+  .form-group input[type="date"] {
+  width: 100%;
+  padding: 8px 12px;
+  height: 38px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: white;
+}
+
   .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #2c3e50;
-  }
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #212529;
+  font-size: 14px;
+}
   .form-group label.required::after {
     content: '*';
     color: #dc3545;
@@ -184,6 +197,7 @@
     font-size: 14px;
     transition: all 0.3s ease;
   }
+  .form-group input[type="date"]:focus,
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {

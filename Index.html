@@ -135,12 +135,12 @@
          ===================================== -->
     <h2 style="margin-top: 20px;">Submit Sales Log</h2>
     
-    <form id="dataForm">
-      <!-- 1) DATE OF VISIT -->
-      <div class="form-group">
-        <label for="dateOfVisit" class="required">Date of Visit:</label>
-        <input type="date" id="dateOfVisit" required aria-required="true">
-      </div>
+      <form id="dataForm">
+        <!-- 1) Date of Visit  -->
+        <div class="form-group">
+          <label for="dateOfVisit" class="required">Date of Visit:</label>
+          <input type="date" id="dateOfVisit" name="dateOfVisit" required aria-required="true">
+        </div>
 
       <!-- 2) VISIT TYPE DROPDOWN -->
       <div class="form-group">
@@ -198,14 +198,6 @@
         </select>
       </div>
 
-      <!-- 7) SalesPerson Selection (Populated After Login) -->
-      <div class="form-group">
-        <label for="SalesPerson" class="required">Sales Person:</label>
-        <select id="SalesPerson" disabled required aria-required="true">
-          <!-- Populated with the logged-in user's name -->
-        </select>
-      </div>
-
       <!-- 8) Product Selection -->
       <div class="form-group">
         <label for="Product" class="required">Product:</label>
@@ -243,20 +235,32 @@
 
       <!-- 12) Visit Details -->
       <div class="form-group">
-        <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
-        <textarea id="VISIT_DESCRIPTION" required aria-required="true" placeholder="Enter visit details"></textarea>
-      </div>
+          <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
+          <textarea 
+            id="VISIT_DESCRIPTION" 
+            name="visitDescription"
+            required 
+            aria-required="true" 
+            placeholder="Enter visit details"
+          ></textarea>
+        </div>
 
       <!-- 13) Next Visit Date -->
-      <div class="form-group">
-        <label for="nextVisit">Next Visit Date (if required):</label>
-        <input type="date" id="nextVisit" aria-label="Next Visit Date">
-      </div>
+        <div class="form-group">
+          <label for="nextVisit">Next Visit Date (if required):</label>
+          <input 
+            type="date" 
+            id="nextVisit" 
+            name="nextVisit"
+            aria-label="Next Visit Date"
+          >
+        </div>
 
       <!-- 14) Workload Information -->
           <!-- Workload Section -->
       <div class="form-group workload-section">
-        <label class="required">Workload Details:</label>
+            <label class="required">Workload Details:</label>
+      
         <div id="workloadContainer">
           <div class="workload-item" data-index="0">
             <div class="workload-header">
@@ -267,11 +271,11 @@
               <div class="row">
                 <div class="field-group">
                   <label>Competitor:</label>
-                  <input type="text" class="workload-competitor" placeholder="Enter competitor name" required>
+                  <input type="text" class="workload-competitor" placeholder="Enter competitor name">
                 </div>
                 <div class="field-group">
                   <label>Model:</label>
-                  <input type="text" class="workload-model" placeholder="Enter model" required>
+                  <input type="text" class="workload-model" placeholder="Enter model" >
                 </div>
                 <div class="field-group">
                   <label>Daily Workload:</label>
@@ -296,8 +300,8 @@
 
       <!-- 15) Workload Information -->
       <div class="form-group contact-persons-section">
-        <label class="required">Contact Persons:</label>
-        <div id="contactPersonsContainer">
+       <label class="required">Contact Persons:</label>
+           <div id="contactPersonsContainer">
           <div class="contact-person" data-index="0">
             <div class="contact-header">
               <h4>Contact Person <span class="contact-letter">A</span></h4>
@@ -321,11 +325,13 @@
         </div>
         <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
       </div>
+
       <!-- 16) File Upload -->
       <div class="form-group">
         <label for="imageUpload">Upload Image (optional):</label>
         <input type="file" id="imageUpload" accept="image/*" capture="camera">
       </div>
+
       <!-- Image Preview and Remove Button -->
       <div class="form-group image-preview" id="imagePreview" style="display:none;">
         <img id="previewImageTag" src="" alt="Image Preview">
@@ -359,7 +365,7 @@
        Footer Section
        ===================================== -->
   <footer>
-    Fas_Reporting_Version_2.2.1
+    Nextek_Fas_Sales_Reporting_Version_1.1.0
     <div style="margin-top: 10px;">
       <a href="?page=extraction" target="_blank">Sales Data Extraction</a> |
       <a href="?page=extractionreport" target="_blank">View Extraction Report</a>

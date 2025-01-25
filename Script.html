@@ -61,9 +61,8 @@
         });
       }
    
-
   /* =====================================
-     Button Workings
+             Button Workings
      ===================================== */
     // Bind Modal Response Buttons
     const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
@@ -197,7 +196,7 @@
 
           // Update welcome message
           const welcomeMsg = document.getElementById('welcomeMessage');
-          welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - Sales Report`;
+          welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - For Sales Report Form`;
 
           // Handle avatar
           if (response.avatarUrl) {
@@ -206,15 +205,6 @@
             avatarImg.src = cleanUrl;
             avatarImg.style.display = 'inline';
           }
-
-          // Set the SalesPerson dropdown with the username
-          const salesPersonSelect = document.getElementById('SalesPerson');
-          salesPersonSelect.innerHTML = '';
-          const option = document.createElement('option');
-          option.value = response.token; // token as value
-          option.textContent = response.username;
-          salesPersonSelect.appendChild(option);
-          salesPersonSelect.disabled = true;
 
           // Store global user info
           window.currentUser = response.username;
@@ -232,9 +222,8 @@
       })
       .checkLogin(username, password);
   }
-
   /* =====================================
-     CONTACT PERSON MANAGEMENT
+         CONTACT PERSON MANAGEMENT
      ===================================== */
   function addContactPerson() {
     const container = document.getElementById('contactPersonsContainer');
@@ -331,54 +320,41 @@
      Work Load Management
      ===================================== */
 
-    function addWorkloadItem() {
-      const container = document.getElementById('workloadContainer');
-      const items = container.getElementsByClassName('workload-item');
-      // For example, no maximum or you can decide a limit
-      const template = items[0].cloneNode(true);
-      const newIndex = items.length;
+function addWorkloadItem() {
+  const container = document.getElementById('workloadContainer');
+  const items = container.getElementsByClassName('workload-item');
+  const template = items[0].cloneNode(true);
+  const newIndex = items.length;
 
-      // Update letter or numbering
-      template.setAttribute('data-wl-index', newIndex);
-      template.querySelector('.workload-letter').textContent = (newIndex + 1); // 1-based
+  // Update workload number
+  template.querySelector('.workload-letter').textContent = String.fromCharCode(65 + newIndex); // Using letters A, B, C, etc.
 
-      // Clear the inputs in the clone
-      template.querySelectorAll('input').forEach(input => {
-        input.value = '';
-      });
+  // Clear inputs
+  template.querySelectorAll('input').forEach(input => {
+    input.value = '';
+  });
 
-      // Show remove button
-      const removeBtn = template.querySelector('.remove-workload');
-      removeBtn.style.display = 'block';
+  // Show remove button
+  const removeBtn = template.querySelector('.remove-workload');
+  removeBtn.style.display = 'block';
 
-      // Append
-      container.appendChild(template);
-    }
+  container.appendChild(template);
+}
 
-    function removeWorkloadItem(button) {
-      const wlItem = button.closest('.workload-item');
-      if (wlItem) {
-        wlItem.remove();
-        updateWorkloadIndices();
-      }
-    }
-
-    function updateWorkloadIndices() {
-      const items = document.querySelectorAll('.workload-item');
-      items.forEach((item, index) => {
-        item.setAttribute('data-wl-index', index);
-        item.querySelector('.workload-letter').textContent = (index + 1);
-      });
-    }
-
+function updateWorkloadIndices() {
+  const items = document.querySelectorAll('.workload-item');
+  items.forEach((item, index) => {
+    item.querySelector('.workload-letter').textContent = String.fromCharCode(65 + index);
+  });
+}
     // Gather the workload data
     function getWorkloadData() {
       const items = document.querySelectorAll('.workload-item');
       return Array.from(items).map(item => ({
-        competitor: sanitizeInput(item.querySelector('.wl-competitor').value),
-        competitorModel: sanitizeInput(item.querySelector('.wl-competitorModel').value),
-        dailyWorkload: sanitizeInput(item.querySelector('.wl-dailyWorkload').value),
-        perTestCost: sanitizeInput(item.querySelector('.wl-perTestCost').value)
+        competitor: sanitizeInput(item.querySelector('.workload-competitor').value),
+        competitorModel: sanitizeInput(item.querySelector('.workload-model').value),
+        dailyWorkload: sanitizeInput(item.querySelector('.workload-daily').value),
+        perTestCost: sanitizeInput(item.querySelector('.workload-cost').value)
       }));
     }
 
@@ -413,7 +389,7 @@
      DROPDOWNS & LOADERS
      ===================================== */
   function populateDropdowns() {
-    const dropdowns = ['Region', 'City', 'Customer', 'Product', 'Department', 'SalesPerson', 'Flags', 'AnalyzerModel'];
+    const dropdowns = ['Region', 'City', 'Customer', 'Product', 'Department', 'Flags', 'AnalyzerModel'];
     
     dropdowns.forEach(function(dd) {
       showLoadingDots(`${dd.toLowerCase()}Loading`, true);
@@ -595,7 +571,7 @@
     requiredFields.forEach(function(id) {
       const field = document.getElementById(id);
       if (field && !field.value) {
-        field.style.border = "2px solid red";
+        field.style.border = "4px solid red";
         if (!firstInvalid) firstInvalid = field;
         isValid = false;
       } else if (field) {
