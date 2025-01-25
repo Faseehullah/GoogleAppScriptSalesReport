@@ -233,7 +233,7 @@
         </select>
       </div>
 
-      <!-- 12) Category Selection -->
+      <!-- 11) Category Selection -->
       <div class="form-group">
         <label for="Category" class="required">Category:</label>
         <select id="Category" disabled required aria-required="true">
@@ -241,88 +241,87 @@
         </select>
       </div>
 
-      <!-- 13) Contact Persons Section -->
+      <!-- 12) Visit Details -->
+      <div class="form-group">
+        <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
+        <textarea id="VISIT_DESCRIPTION" required aria-required="true" placeholder="Enter visit details"></textarea>
+      </div>
+
+      <!-- 13) Next Visit Date -->
+      <div class="form-group">
+        <label for="nextVisit">Next Visit Date (if required):</label>
+        <input type="date" id="nextVisit" aria-label="Next Visit Date">
+      </div>
+
+      <!-- 14) Workload Information -->
+          <!-- Workload Section -->
+      <div class="form-group workload-section">
+        <label class="required">Workload Details:</label>
+        <div id="workloadContainer">
+          <div class="workload-item" data-index="0">
+            <div class="workload-header">
+              <h4>Workload <span class="workload-letter">A</span></h4>
+              <button type="button" class="remove-workload" style="display: none;">&times;</button>
+            </div>
+            <div class="workload-fields">
+              <div class="row">
+                <div class="field-group">
+                  <label>Competitor:</label>
+                  <input type="text" class="workload-competitor" placeholder="Enter competitor name" required>
+                </div>
+                <div class="field-group">
+                  <label>Model:</label>
+                  <input type="text" class="workload-model" placeholder="Enter model" required>
+                </div>
+                <div class="field-group">
+                  <label>Daily Workload:</label>
+                  <div class="input-group">
+                    <input type="number" class="workload-daily" placeholder="Enter value" min="0">
+                    <span class="input-group-text">Samples/day</span>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label>Test Cost:</label>
+                  <div class="input-group">
+                    <span class="input-group-text">PKR</span>
+                    <input type="number" class="workload-cost" placeholder="Enter amount" min="0" step="0.01">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" id="addWorkloadBtn" class="add-workload-btn">+ Add Another Workload</button>
+      </div>
+
+      <!-- 15) Workload Information -->
       <div class="form-group contact-persons-section">
         <label class="required">Contact Persons:</label>
         <div id="contactPersonsContainer">
-          <!-- Contact Person Template (Cloned for more) -->
           <div class="contact-person" data-index="0">
             <div class="contact-header">
               <h4>Contact Person <span class="contact-letter">A</span></h4>
               <button type="button" class="remove-contact" style="display: none;">×</button>
             </div>
             <div class="contact-fields">
-              <!-- Name -->
-              <div class="form-group">
+              <div class="field-group">
                 <label>Name:</label>
                 <input type="text" class="contact-name" placeholder="Enter name" required>
               </div>
-              <!-- Post -->
-              <div class="form-group">
+              <div class="field-group">
                 <label>Post:</label>
                 <input type="text" class="contact-post" placeholder="Enter designation" required>
               </div>
-              <!-- Contact Number -->
-              <div class="form-group">
+              <div class="field-group">
                 <label>Contact Number:</label>
                 <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
               </div>
             </div>
           </div>
         </div>
-        <!-- Button to Add Another Contact Person -->
         <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
       </div>
-
-      <!-- 14) Next Visit Date -->
-      <div class="form-group">
-        <label for="nextVisit">Next Visit Date (if required):</label>
-        <input type="date" id="nextVisit" aria-label="Next Visit Date">
-      </div>
-
-      <!-- 15) Visit Details -->
-      <div class="form-group">
-        <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
-        <textarea id="VISIT_DESCRIPTION" required aria-required="true" placeholder="Enter visit details"></textarea>
-      </div>
-
-      <!-- 16) Workload Information (optional) -->
-     <!-- Workload Section -->
-      <div class="form-group workload-section">
-        <label>Workload Information:</label>
-        <div id="workloadContainer">
-          <!-- One Workload Row (template) -->
-          <div class="workload-item" data-wl-index="0">
-            <div class="workload-header">
-              <h4>Workload <span class="workload-letter">1</span></h4>
-              <button type="button" class="remove-workload" style="display: none;">×</button>
-            </div>
-            <div class="workload-fields">
-              <div class="form-group">
-                <label>Competitor:</label>
-                <input type="text" class="wl-competitor" placeholder="Competitor Name/Brand">
-              </div>
-              <div class="form-group">
-                <label>Competitor Model:</label>
-                <input type="text" class="wl-competitorModel" placeholder="Model">
-              </div>
-              <div class="form-group">
-                <label>Daily Work Load:</label>
-                <input type="number" class="wl-dailyWorkload" placeholder="Estimated daily workload" min="0">
-              </div>
-              <div class="form-group">
-                <label>Per Test Cost:</label>
-                <input type="number" class="wl-perTestCost" placeholder="Cost per test" min="0" step="0.01">
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Button to Add Another Workload Row -->
-        <button type="button" id="addWorkloadBtn" class="add-workload-btn">+ Add Another Workload</button>
-      </div>
-
-
-      <!-- 17) File Upload -->
+      <!-- 16) File Upload -->
       <div class="form-group">
         <label for="imageUpload">Upload Image (optional):</label>
         <input type="file" id="imageUpload" accept="image/*" capture="camera">

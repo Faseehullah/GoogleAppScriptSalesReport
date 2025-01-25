@@ -457,8 +457,11 @@ function validateContactPerson(contact) {
 /**
  * Creates a workload record in the WORKLOAD sheet.
  * If all workload fields are empty, it does nothing.
+ * @param {string} id - The unique ID for the record.
+ * @param {string} customer - The customer's name.
+ * @param {Array} workloads - An array of workload objects.
  */
-function createMultipleWorkloadRecords(id, workloads) {
+function createMultipleWorkloadRecords(id,customer, workloads) {
   try {
     if (!Array.isArray(workloads) || workloads.length === 0) return;
 
@@ -468,7 +471,7 @@ function createMultipleWorkloadRecords(id, workloads) {
 
     const rows = workloads.map(wl => [
       id,
-      customer,
+      customer || "",
       wl.competitor || "",
       wl.competitorModel || "",
       wl.dailyWorkload || "",
@@ -476,7 +479,7 @@ function createMultipleWorkloadRecords(id, workloads) {
       new Date().toISOString() // Timestamp
     ]);
 
-    sheet.getRange(sheet.getLastRow()+1, 1, rows.length, 6).setValues(rows);
+    sheet.getRange(sheet.getLastRow()+1, 1, rows.length, 7).setValues(rows);
   } catch (error) {
     ErrorLogger.log('createMultipleWorkloadRecords', error, { id, workloads });
     throw new Error('Failed to save workload records.');
@@ -633,7 +636,7 @@ function processForm(formObject, currentUser, token) {
     );
 
     // 10) Create workload record (if competitor info is provided)
-    createMultipleWorkloadRecords(uniqueId, formObject.workloads);
+    createMultipleWorkloadRecords(uniqueId, formObject.Customer,formObject.workloads);
     AuditLogger.log('Form Submission', currentUser, { id: uniqueId, customer: formObject.Customer });
     return "Data successfully submitted by Sales Person: " + currentUser;
   } catch (error) {

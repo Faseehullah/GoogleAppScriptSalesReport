@@ -210,81 +210,248 @@
     background-color: #003d7a;
   }
 
-  /* =====================================
-     Contact Persons Section
-     ===================================== */
-  .contact-persons-section {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
-  }
-  .contact-person {
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 15px;
-    transition: box-shadow 0.3s ease;
-  }
-  .contact-person:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  .contact-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e9ecef;
-  }
-  .contact-header h4 {
-    margin: 0;
-    color: #004d99;
-    font-size: 16px;
-  }
-  .contact-letter {
-    color: #6c757d;
-    font-weight: normal;
-    margin-left: 5px;
-  }
-  .contact-fields {
-    display: grid;
-    gap: 15px;
-  }
-  .add-contact-btn {
-    background-color: #28a745 !important;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
-  }
-  .add-contact-btn:hover {
-    background-color: #218838 !important;
-  }
-  .remove-contact {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    transition: background-color 0.3s ease;
-  }
-  .remove-contact:hover {
-    background-color: #c82333;
-  }
+ /* =====================================
+   Contact Persons Section
+   Main container and layout styles 
+   ===================================== */
+.contact-persons-section {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
 
+/* Contact Person Card Styles */
+.contact-person {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: box-shadow 0.3s ease;
+}
+
+.contact-person:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Contact Header Styles */
+.contact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.contact-header h4 {
+  margin: 0;
+  color: #004d99;
+  font-size: 16px;
+}
+
+.contact-letter {
+  color: #6c757d;
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+/* Contact Form Field Styles */
+.contact-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Contact Section Button Styles */
+.add-contact-btn {
+  background-color: #28a745 !important;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 15px;
+  transition: background-color 0.3s ease;
+}
+
+.add-contact-btn:hover {
+  background-color: #218838 !important;
+}
+
+.remove-contact {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+}
+
+.remove-contact:hover {
+  background-color: #c82333;
+}
+
+/* =====================================
+   Workload Section
+   Main container and layout styles
+   ===================================== */
+.workload-section {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+/* Workload Card Styles */
+.workload-item {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: box-shadow 0.3s ease;
+}
+
+.workload-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Workload Header Styles */
+.workload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.workload-header h4 {
+  margin: 0;
+  color: #004d99;
+  font-size: 16px;
+}
+
+.workload-letter {
+  color: #6c757d;
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+/* Workload Grid Layout */
+.workload-fields .row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin: 0;
+}
+
+/* Input Group Styles */
+.input-group {
+  display: flex;
+  width: 100%;
+  height: 38px; /* Standardize height */
+  box-sizing: border-box;
+}
+
+.input-group-text {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px solid #ced4da;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
+  height: 100%; /* Match parent height */
+  box-sizing: border-box;
+}
+
+.input-group input {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.input-group-text:first-child {
+  border-right: none;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.input-group-text:last-child {
+  border-left: none;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Workload Button Styles */
+.add-workload-btn {
+  background-color: #28a745 !important;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 15px;
+  transition: background-color 0.3s ease;
+}
+
+.add-workload-btn:hover {
+  background-color: #218838 !important;
+}
+
+.remove-workload {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+}
+
+.remove-workload:hover {
+  background-color: #c82333;
+}
+/* =====================================
+     Common Fields of Contact and workload
+  ===================================== */
+.contact-fields input,
+.workload-fields input {
+  width: 100%;
+  padding: 8px 12px;
+  height: 38px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.contact-fields label,
+.workload-fields label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #212529;
+  font-size: 14px;
+}
   /* =====================================
      Input Container
      ===================================== */
@@ -494,31 +661,48 @@
   }
 
   /* =====================================
+     Common Transitions
+     ===================================== */
+.input-group input,
+.input-group-text,
+.contact-fields input,
+.workload-fields input {
+  transition: all 0.3s ease;
+}
+
+
+  /* =====================================
      Responsive
      ===================================== */
-  @media screen and (max-width: 768px) {
-    .main-form-container {
-      margin: 20px;
-      padding: 20px;
-    }
-    .contact-fields {
-      grid-template-columns: 1fr;
-    }
-    .header h1 {
-      font-size: 20px;
-    }
-    .header img {
-      height: 40px;
-    }
-    .form-group button[type="submit"] {
-      width: 100%;
-      padding: 12px;
-    }
+  /* Responsive Layouts */
+@media screen and (max-width: 768px) {
+  /* Mobile styles */
+  .main-form-container {
+    margin: 20px;
+    padding: 20px;
   }
-  @media screen and (min-width: 769px) {
-    .contact-fields {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
+  
+  .contact-fields,
+  .workload-fields .row {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
+  
+  .input-group {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .input-group-text {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 4px 4px 0 0;
+  }
+  
+  .input-group input {
+    border-radius: 0 0 4px 4px;
+    border-top: none;
+  }
+
+}
 </style>
