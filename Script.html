@@ -25,6 +25,11 @@
       saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
     }
 
+    const cancelAddCustomerBtn = document.getElementById('cancelAddCustomerButton');
+    if (cancelAddCustomerBtn) {
+      cancelAddCustomerBtn.addEventListener('click', resetAddCustomerForm);
+    }
+
     /***********************************************
      * MANUAL CONTACTS (BUTTON TO ADD MORE)
      ***********************************************/
@@ -99,7 +104,7 @@
     if (forgotLink) {
       forgotLink.addEventListener('click', function(e) {
         e.preventDefault();
-        forgotPasswordModal.style.display = 'block';
+        forgotPasswordModal.style.display = 'flex';
       });
     }
     if (resetButton) {
@@ -178,6 +183,25 @@
 
         // Reset existing contacts
         resetContactsSection();
+      });
+    }
+
+    /***********************************************
+     * TOGGLE EXISTING CONTACTS SECTION
+     ***********************************************/
+    const toggleExistingContactsBtn = document.getElementById('toggleExistingContactsBtn');
+    const existingContactsCollapsible = document.getElementById('existingContactsCollapsible');
+    if (toggleExistingContactsBtn && existingContactsCollapsible) {
+      toggleExistingContactsBtn.addEventListener('click', function() {
+        if (existingContactsCollapsible.classList.contains('expanded')) {
+          existingContactsCollapsible.classList.remove('expanded');
+          existingContactsCollapsible.classList.add('collapsed');
+          toggleExistingContactsBtn.textContent = 'Show Existing Contacts';
+        } else {
+          existingContactsCollapsible.classList.remove('collapsed');
+          existingContactsCollapsible.classList.add('expanded');
+          toggleExistingContactsBtn.textContent = 'Hide Existing Contacts';
+        }
       });
     }
   });
@@ -264,7 +288,7 @@
           customerSelect.disabled = true;
         }
 
-        // Optionally show a label for the selected customer
+        // Show a label for the selected customer
         const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
         if (selectedCustomerLabel) {
           selectedCustomerLabel.textContent = `Selected Customer: ${customerId}`;
@@ -326,35 +350,57 @@
       .getExistingContacts(customerId);
   }
 
-
   function addSelectedContacts() {
     const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
+    if (checkboxes.length === 0) {
+      showCustomError('Please select at least one existing contact to add.');
+      return;
+    }
+
     const manualContainer = document.getElementById('contactPersonsContainer'); 
-    checkboxes.forEach(checkbox => {
-      const contactIndex = checkbox.value;
+    let addedCount = 0;
+
+    checkboxes.forEach(cb => {
+      const contactIndex = cb.value;
       const contact = window.existingContactsData[contactIndex];
       if (contact) {
-        // Check for duplicates: name + post + number
-        const alreadyExists = Array.from(manualContainer.querySelectorAll('.contact-person')).some(cp => {
-          const existingName = cp.querySelector('.contact-name').value.trim().toUpperCase();
-          const existingPost = cp.querySelector('.contact-post').value.trim().toUpperCase();
-          const existingNumber = cp.querySelector('.contact-number').value.trim().toUpperCase();
+        // Find the first empty contact person field
+        const contactPersons = manualContainer.querySelectorAll('.contact-person');
+        let fieldFilled = false;
+        for (let cp of contactPersons) {
+          const nameInput = cp.querySelector('.contact-name');
+          const postInput = cp.querySelector('.contact-post');
+          const numberInput = cp.querySelector('.contact-number');
 
-          return (existingName === contact.name.toUpperCase()) &&
-                 (existingPost === contact.post.toUpperCase()) &&
-                 (existingNumber === (contact.number !== 'N/A' ? contact.number.toUpperCase() : ''));
-        });
+          if (!nameInput.value.trim() && !postInput.value.trim() && !numberInput.value.trim()) {
+            // Populate this contact person
+            nameInput.value = contact.name;
+            postInput.value = contact.post;
+            numberInput.value = contact.number !== 'N/A' ? contact.number : '';
+            fieldFilled = true;
+            addedCount++;
+            break;
+          }
+        }
 
-        if (!alreadyExists) {
-          // If not a duplicate, add this contact as a new "manual" contact row
+        if (!fieldFilled) {
+          // If no empty fields, add a new contact person
           addContactPerson({
             name: contact.name,
             post: contact.post,
             number: contact.number !== 'N/A' ? contact.number : ''
           });
+          addedCount++;
         }
       }
     });
+
+    if (addedCount > 0) {
+      showConfirmationMessage(`${addedCount} contact(s) added successfully.`);
+    } else {
+      showCustomError('No contacts were added.');
+    }
+
     // Optionally uncheck the checkboxes
     checkboxes.forEach(cb => cb.checked = false);
   }
@@ -441,7 +487,7 @@
   }
 
   function removeContactPerson(button) {
-    // Already corrected to confirm & remove
+    // Confirm before removing
     if (!confirm('Are you sure you want to remove this contact?')) return;
 
     const contactPerson = button.closest('.contact-person');
@@ -583,66 +629,62 @@
      DROPDOWNS & LOADERS
      ===================================== */
   function populateDropdowns() {
-    // We'll fetch the following dropdowns
-    const dropdowns = ['Region', 'City', 'Customer', 'Product', 'Department', 'Flags', 'AnalyzerModel'];
+    // Fetch and populate independent dropdowns
+    const independentDropdowns = ['Region', 'Product', 'Department'];
     
-    dropdowns.forEach(function(dd) {
+    independentDropdowns.forEach(function(dd) {
       showLoadingDots(`${dd.toLowerCase()}Loading`, true);
-      google.script.run
-        .withSuccessHandler(function(data) {
-          populateDropdown(dd, data);
-          showLoadingDots(`${dd.toLowerCase()}Loading`, false);
-
-          // If it's the AnalyzerModel, disable it until product is chosen
-          if (dd === 'AnalyzerModel') {
-            document.getElementById(dd).disabled = true;
-          }
-
-          // If "Customer" changes -> fetch existing contacts
-          if (dd === 'Customer') {
-            const customerSelect = document.getElementById('Customer');
-            customerSelect.addEventListener('change', function(e) {
-              resetContactsSection();
-
-              if (e.target.value) {
-                google.script.run
-                  .withSuccessHandler(function(contacts) {
-                    window.existingContactsData = contacts;
-                    populateExistingContacts(e.target.value);
-                  })
-                  .getExistingContacts(e.target.value);
-              }
-            });
-          }
-
-          // Region -> City
-          if (dd === 'Region') {
+      
+      if (dd === 'Region') {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            populateDropdown(dd, data);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
             document.getElementById('Region').addEventListener('change', filterCityByRegion);
-          }
-
-          // City -> Customer
-          if (dd === 'City') {
-            document.getElementById('City').addEventListener('change', filterCustomersByCity);
-          }
-
-          // Product -> AnalyzerModel
-          if (dd === 'Product') {
+          })
+          .withFailureHandler(function(error) {
+            console.error(`Failed to populate ${dd}:`, error);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+            showCustomError(`Failed to load ${dd} data. Please try refreshing the page.`);
+          })
+          .getUniqueRegions();
+      } else if (dd === 'Product') {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            populateDropdown(dd, data);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
             document.getElementById('Product').addEventListener('change', filterAnalyzerByProduct);
-          }
-
-          // If Flags -> Category
-          if (dd === 'Flags') {
-            const flagsSelect = document.getElementById('Flags');
-            flagsSelect.addEventListener('change', filterCategoryByFlag);
-          }
-        })
-        .withFailureHandler(function(error) {
-          console.error(`Failed to populate ${dd}:`, error);
-          showLoadingDots(`${dd.toLowerCase()}Loading`, false);
-          showCustomError(`Failed to load ${dd} data. Please try refreshing the page.`);
-        })
-        .getDropdownDataCached(dd);
+          })
+          .withFailureHandler(function(error) {
+            console.error(`Failed to populate ${dd}:`, error);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+            showCustomError(`Failed to load ${dd} data. Please try refreshing the page.`);
+          })
+          .getUniqueProducts();
+      } else {
+        // For other independent dropdowns like Department
+        google.script.run
+          .withSuccessHandler(function(data) {
+            populateDropdown(dd, data);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+            // Add change listeners for other dropdowns if necessary
+          })
+          .withFailureHandler(function(error) {
+            console.error(`Failed to populate ${dd}:`, error);
+            showLoadingDots(`${dd.toLowerCase()}Loading`, false);
+            showCustomError(`Failed to load ${dd} data. Please try refreshing the page.`);
+          })
+          .getDropdownDataCached(dd);
+      }
     });
+
+    // Initialize dependent dropdowns as disabled
+    document.getElementById('City').disabled = true;
+    document.getElementById('Customer').disabled = true;
+    document.getElementById('AnalyzerModel').disabled = true;
+    document.getElementById('Flags').disabled = true;
+    document.getElementById('Category').value = '';
+    document.getElementById('Category').disabled = true;
   }
 
   function populateDropdown(id, data) {
@@ -652,6 +694,8 @@
       return;
     }
     try {
+      if (id === 'Category') return; // Category is handled separately
+
       select.innerHTML = '<option value="">Select</option>';
       if (data && Array.isArray(data) && data.length > 0) {
         data.forEach(function(row) {
@@ -678,8 +722,9 @@
         .withSuccessHandler(function(cities) {
           populateDropdown('City', cities);
           citySelect.disabled = false;
-          clearDropdown('Customer');
           showLoadingDots('cityLoading', false);
+          // Add change listener for City
+          document.getElementById('City').addEventListener('change', filterCustomersByCity);
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load cities:', error);
@@ -689,7 +734,7 @@
         .getCityByRegion(region);
     } else {
       clearDropdown('City');
-      clearDropdown('Customer');
+      citySelect.disabled = true;
       showLoadingDots('cityLoading', false);
     }
   }
@@ -704,6 +749,19 @@
           populateDropdown('Customer', customers);
           customerSelect.disabled = false;
           showLoadingDots('customerLoading', false);
+          // Add change listener for Customer
+          document.getElementById('Customer').addEventListener('change', function(e) {
+            resetContactsSection();
+
+            if (e.target.value) {
+              google.script.run
+                .withSuccessHandler(function(contacts) {
+                  window.existingContactsData = contacts;
+                  populateExistingContacts(e.target.value);
+                })
+                .getExistingContacts(e.target.value);
+            }
+          });
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load customers:', error);
@@ -721,13 +779,33 @@
   function filterAnalyzerByProduct() {
     const product = document.getElementById('Product').value;
     const analyzerSelect = document.getElementById('AnalyzerModel');
+    const flagsSelect = document.getElementById('Flags');
+    const categoryInput = document.getElementById('Category');
+
+    // Reset lower dropdowns
+    clearDropdown('AnalyzerModel');
+    clearDropdown('Flags');
+    categoryInput.value = '';
+
+    flagsSelect.disabled = true;
+    categoryInput.disabled = true;
+
     if (product) {
       showLoadingDots('analyzerLoading', true);
       google.script.run
         .withSuccessHandler(function(analyzers) {
+          console.log('Analyzers received:', analyzers); // Debugging line
+          if (analyzers.length === 0) {
+            showCustomError('No Analyzer Models found for the selected Product.');
+          }
           populateDropdown('AnalyzerModel', analyzers);
           analyzerSelect.disabled = false;
           showLoadingDots('analyzerLoading', false);
+
+          // Attach change listener now that AnalyzerModel is populated
+          analyzerSelect.addEventListener('change', function() {
+            filterFlagsByAnalyzerModel();
+          });
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load analyzers:', error);
@@ -736,54 +814,91 @@
         })
         .getAnalyzersByProduct(product);
     } else {
-      clearDropdown('AnalyzerModel');
       analyzerSelect.disabled = true;
       showLoadingDots('analyzerLoading', false);
     }
   }
 
+  function filterFlagsByAnalyzerModel() {
+    const product = document.getElementById('Product').value;
+    const analyzerModel = document.getElementById('AnalyzerModel').value;
+    const flagsSelect = document.getElementById('Flags'); // Defined here
+    const categoryInput = document.getElementById('Category');
+
+    // Reset Flags and Category
+    clearDropdown('Flags');
+    categoryInput.value = '';
+    categoryInput.disabled = true;
+
+    if (product && analyzerModel) {
+      showLoadingDots('flagsLoading', true);
+      google.script.run
+        .withSuccessHandler(function(flags) {
+          console.log('Flags received:', flags); // Debugging line
+          if (flags.length === 0) {
+            showCustomError('No Flags found for the selected Analyzer Model.');
+          }
+          populateDropdown('Flags', flags);
+          flagsSelect.disabled = false; // Now correctly defined
+          showLoadingDots('flagsLoading', false);
+
+          // Attach change listener to Flags dropdown
+          flagsSelect.addEventListener('change', filterCategoryByFlag);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load flags:', error);
+          showLoadingDots('flagsLoading', false);
+          showCustomError('Failed to load flags. Please try again.');
+        })
+        .getFlagsByProductAndAnalyzer(product, analyzerModel);
+    } else {
+      flagsSelect.disabled = true; // Now correctly defined
+      showLoadingDots('flagsLoading', false);
+    }
+  }
+
+
   /**
    * Called when the "Flags" dropdown changes.
-   * Fetches the matching Category from the server and updates the Category dropdown.
+   * Fetches the matching Category from the server and updates the Category field.
    */
   function filterCategoryByFlag() {
     const product = document.getElementById('Product').value;
+    const analyzerModel = document.getElementById('AnalyzerModel').value;
     const flag = document.getElementById('Flags').value;
-    const categorySelect = document.getElementById('Category');
+    const categoryInput = document.getElementById('Category');
 
-    // If product or flag is missing, clear Category
-    if (!product || !flag) {
-      categorySelect.innerHTML = '<option value="">Select</option>';
-      categorySelect.disabled = true;
+    // If product, analyzerModel, or flag is missing, clear Category
+    if (!product || !analyzerModel || !flag) {
+      categoryInput.value = '';
+      categoryInput.disabled = true;
       return;
     }
 
     // Make a server call to get the Category
     google.script.run
       .withSuccessHandler(function(categoryValue) {
-        // If no category found, we set the dropdown to empty
+        console.log('Category received:', categoryValue); // Debugging line
+        // If no category found, set the input to indicate so
         if (!categoryValue) {
-          categorySelect.innerHTML = '<option value="">No Category Found</option>';
-          categorySelect.disabled = true;
+          categoryInput.value = 'No Category Found';
+          categoryInput.disabled = true;
           return;
         }
 
-        // Otherwise, populate a single option
-        categorySelect.disabled = false;
-        categorySelect.innerHTML = '';
-        const option = document.createElement('option');
-        option.value = categoryValue;
-        option.textContent = categoryValue;
-        categorySelect.appendChild(option);
+        // Otherwise, set the Category
+        categoryInput.value = categoryValue;
+        categoryInput.disabled = true; // Remain disabled
       })
       .withFailureHandler(function(error) {
         console.error('Failed to fetch category:', error);
         showCustomError('Failed to fetch category. Please try again.');
-        categorySelect.innerHTML = '<option value="">Error</option>';
-        categorySelect.disabled = true;
+        categoryInput.value = 'Error';
+        categoryInput.disabled = true;
       })
-      .getCategoryByFlag(product, flag); 
+      .getCategoryByProductAnalyzerFlag(product, analyzerModel, flag); 
   }
+
 
   function clearDropdown(id) {
     const select = document.getElementById(id);
@@ -823,11 +938,11 @@
     requiredFields.forEach(function(id) {
       const field = document.getElementById(id);
       if (field && !field.value) {
-        field.style.border = "4px solid red";
+        field.classList.add('error-border');
         if (!firstInvalid) firstInvalid = field;
         isValid = false;
       } else if (field) {
-        field.style.border = "";
+        field.classList.remove('error-border');
       }
     });
 
@@ -839,7 +954,7 @@
     // Validate contact persons
     if (!validateContactPersons()) {
       isValid = false;
-      showCustomError('Please fill in all required contact person fields correctly');
+      showCustomError('Please fill in all required contact person fields correctly.');
     }
 
     if (!isValid) {
@@ -870,10 +985,10 @@
       // Combine them, skipping duplicates
       const allContacts = [...selectedExistingContacts, ...manualContacts];
 
-      // Now also fetch the Category 
-      const categorySelect = document.getElementById('Category');
-      const categoryValue = categorySelect && categorySelect.value 
-                            ? sanitizeInput(categorySelect.value) 
+      // Fetch the Category value
+      const categoryInput = document.getElementById('Category');
+      const categoryValue = categoryInput && categoryInput.value 
+                            ? sanitizeInput(categoryInput.value) 
                             : "";
 
       // Build form object
@@ -896,6 +1011,8 @@
         nextVisit: sanitizeInput(document.getElementById('nextVisit').value) || "",
         workloads: getWorkloadData()
       };
+
+      console.log('Form Object:', formObject); // Debugging line
 
       google.script.run
         .withSuccessHandler(function(response) {
@@ -930,7 +1047,7 @@
     document.getElementById('newCustomerField').style.display = 'none';
 
     // Reset manual container to one blank contact
-    const manualContainer = document.getElementById('manualContactsContainer');
+    const manualContainer = document.getElementById('contactPersonsContainer');
     const contacts = manualContainer.querySelectorAll('.contact-person');
     while (contacts.length > 1) {
       contacts[contacts.length - 1].remove();
@@ -1096,7 +1213,7 @@
         populateDropdowns();
         if (saveButton) {
           saveButton.disabled = false;
-          saveButton.textContent = 'Save New Customer';
+          saveButton.textContent = 'Save Customer';
         }
       })
       .withFailureHandler(function(error) {
@@ -1104,7 +1221,7 @@
         showCustomError('Failed to add new customer. Please try again.');
         if (saveButton) {
           saveButton.disabled = false;
-          saveButton.textContent = 'Save New Customer';
+          saveButton.textContent = 'Save Customer';
         }
       })
       .addNewCustomerWithCity(newCustomerData.region, newCustomerData.city, newCustomerData.customerName, window.currentUser, window.sessionToken);
@@ -1136,6 +1253,12 @@
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     nextVisit.min = formatDate(tomorrow);
+
+    // Ensure Category is disabled on load
+    const categoryInput = document.getElementById('Category');
+    if (categoryInput) {
+      categoryInput.disabled = true;
+    }
   };
 
   function updateTimestamp() {

@@ -94,8 +94,6 @@
     <!-- Add Customer Manually Button -->
     <button id="addCustomerButton">Add New Customer (Manual)</button>
 
-    
-
     <!-- =====================================
          Add Customer Manual Form (Hidden by Default)
          ===================================== -->
@@ -214,7 +212,7 @@
       <!-- 11) Category -->
       <div class="form-group">
         <label for="Category" class="required">Category:</label>
-        <select id="Category" disabled required aria-required="true"></select>
+         <input type="text" id="Category" disabled required aria-required="true" readonly />
       </div>
 
       <!-- 12) Visit Details -->
@@ -277,8 +275,13 @@
       <!-- Existing Contact Persons Section -->
       <div class="form-group existing-contact-section">
         <label>Existing Contact Persons:</label>
-        <div id="existingContactsContainer">
-          <!-- Existing contacts will be populated here dynamically -->
+        <!-- Toggle Button -->
+        <button type="button" id="toggleExistingContactsBtn">Hide Existing Contacts</button>
+        <!-- Collapsible Container -->
+        <div id="existingContactsCollapsible" class="collapsible expanded">
+          <div id="existingContactsContainer">
+            <!-- Existing contacts will be populated here dynamically -->
+          </div>
         </div>
       </div>
 
