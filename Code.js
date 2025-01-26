@@ -10,7 +10,7 @@ const Config = {
       // The credentials range now includes 4 columns: Username, HashedPassword, AvatarURL, Email
       CREDENTIALS: "DATASHEETS!T2:W32",
       // One row per contact (ID, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT)
-      CONTACTS: "CONTACTS!A2:E2",
+      CONTACTS: "CONTACTS!A2:G",
       // One row per new workload (ID, Competitor, Competitor Model, Daily Work Load, Estimated Per Test Cost)
       WORKLOAD: "WORKLOAD!A2:G2",
       // Dropdown Ranges (unchanged)
@@ -19,9 +19,9 @@ const Config = {
       DEPARTMENT: "DATASHEETS!E2:E30",
       SALESPERSON: "DATASHEETS!G2:G55",
       PRODUCT: "DATASHEETS!O2:O25",
-      FLAGS: "FLAGS!A2:B50",
+      FLAGS: "FLAGS!A2:C50",
       ANALYZER_MODEL: "DATASHEETS!Q2:R30",
-      CUSTOMERS: "DATASHEETS!A2:B400",
+      CUSTOMERS: "DATASHEETS!A2:C400",
       CITY_REGION_MAP: "DATASHEETS!I2:J400",
       ERROR_LOGS: "Error Logs!A2:E2", // For error logging
       AUDIT_LOGS: "Audit Logs!A2:D2"
@@ -98,8 +98,11 @@ class ErrorLogger {
    * @param {Object} additionalInfo - Any additional information.
    */
   static log(functionName, error, additionalInfo = {}) {
+    // Convert to Pakistan time (+5:00)
+    
+   
     const errorLog = [
-      new Date().toISOString(),
+      getPakistanDateTime().toISOString(),
       functionName,
       error.message || error,
       error.stack || '',
@@ -187,7 +190,7 @@ function checkLogin(username, password) {
       if (userLoginAttempts[username]) {
         delete userLoginAttempts[username];
       }
-      AuditLogger.log('Successful Login', username, { timestamp: new Date().toISOString() });
+      AuditLogger.log('Successful Login', username, { timestamp: getPakistanDateTime().toISOString() });
       return {
         success: true,
         message: "Login successful",
@@ -203,7 +206,7 @@ function checkLogin(username, password) {
         userLoginAttempts[username].attempts += 1;
         userLoginAttempts[username].lastAttempt = currentTime;
       }
-      AuditLogger.log('Failed Login Attempt', username, { timestamp: new Date().toISOString() });
+      AuditLogger.log('Failed Login Attempt', username, { timestamp: getPakistanDateTime().toISOString() });
       return { success: false, message: "Invalid username or password" };
     }
   } catch (error) {
@@ -354,30 +357,44 @@ function getDropdownDataCached(name) {
   }
 }
 
-function getCustomersByRegion(region) {
-  try {
-    const data = readRecord(Config.SPREADSHEET.RANGES.CUSTOMERS);
-    return data
-      .filter(row => row[0] === region)
-      .map(row => [row[1]])
-      .filter(customer => customer[0]);
-  } catch (error) {
-    ErrorLogger.log('getCustomersByRegion', error, { region });
-    return [];
-  }
-}
-
 function getCityByRegion(region) {
   try {
-    const data = readRecord(Config.SPREADSHEET.RANGES.CITY_REGION_MAP);
-    return data
-      .filter(row => row[0] === region)
-      .map(row => [row[1]]);
+    const data = readRecord(Config.SPREADSHEET.RANGES.CUSTOMERS);
+    // Get unique cities for the region
+    const uniqueCities = [...new Set(
+      data
+        .filter(row => row[0] === region)  // Filter by region
+        .map(row => row[1])                // Get city column
+        .filter(Boolean)                    // Remove empty values
+    )];
+    
+    // Return in required format [[city1], [city2], ...]
+    return uniqueCities.map(city => [city]);
   } catch (error) {
     ErrorLogger.log('getCityByRegion', error, { region });
     return [];
   }
 }
+
+function getCustomersByCity(city) {
+  try {
+    const data = readRecord(Config.SPREADSHEET.RANGES.CUSTOMERS);
+    // Get unique customers for the city
+    const uniqueCustomers = [...new Set(
+      data
+        .filter(row => row[1] === city)     // Filter by city
+        .map(row => row[2])                 // Get customer name
+        .filter(Boolean)                     // Remove empty values
+    )];
+    
+    // Return in required format [[customer1], [customer2], ...]
+    return uniqueCustomers.map(customer => [customer]);
+  } catch (error) {
+    ErrorLogger.log('getCustomersByCity', error, { city });
+    return [];
+  }
+}
+
 
 
 function getAnalyzersByProduct(product) {
@@ -395,8 +412,8 @@ function getAnalyzersByProduct(product) {
 
 function getFlagsByProduct(product) {
   try {
-    // Let’s say we store them in "FLAGS!A2:B200" => A=Product, B=Flag
-    const data = readRecord("FLAGS!A2:B255");
+    // Let’s say we store them in "FLAGS!A2:C2255" => A=Product, B=Flag , C=Catergory
+    const data = readRecord("FLAGS!A2:C255");
     // Filter rows where row[0] == product
     const matching = data.filter(row => row[0] && row[0].toUpperCase() === product.toUpperCase());
     // Return array-of-arrays of the flags
@@ -408,9 +425,71 @@ function getFlagsByProduct(product) {
   }
 }
 
+/**
+ * Returns the single category (column C) for a given product and flag.
+ * @param {string} product
+ * @param {string} flag
+ * @return {string} The matching category, or "" if not found.
+ */
+function getCategoryByFlag(product, flag) {
+  try {
+    const data = readRecord("FLAGS!A2:C255"); // [ Product, Flag, Category ]
+    // Find the row that matches the product & flag
+    const matchRow = data.find(row => 
+      row[0] && row[0].toUpperCase() === product.toUpperCase() &&
+      row[1] && row[1].toUpperCase() === flag.toUpperCase()
+    );
+    if (!matchRow) {
+      // No match
+      return "";
+    }
+    // matchRow[2] is the Category
+    return matchRow[2] || "";
+  } catch (error) {
+    ErrorLogger.log("getCategoryByFlag", error, { product, flag });
+    return "";
+  }
+}
+
+
 /**************************
- * CONTACT PERSON MANAGEMENT (old approach)
- * Now we'll create a separate function to store them in CONTACTS sheet.
+ * WORKLOAD MANAGEMENT
+ **************************/
+/**
+ * Creates a workload record in the WORKLOAD sheet.
+ * If all workload fields are empty, it does nothing.
+ * @param {string} id - The unique ID for the record.
+ * @param {string} customer - The customer's name.
+ * @param {Array} workloads - An array of workload objects.
+ */
+function createMultipleWorkloadRecords(id,customer, workloads) {
+  try {
+    if (!Array.isArray(workloads) || workloads.length === 0) return;
+
+    const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("WORKLOAD");
+    // Suppose columns = A: ID, B:Customer , C:Competitor, D:CompetitorModel,
+    //                  E:DailyWorkload, F:PerTestCost, G:Timestamp
+    
+
+    const rows = workloads.map(wl => [
+      id,
+      customer || "",
+      wl.competitor || "",
+      wl.competitorModel || "",
+      wl.dailyWorkload || "",
+      wl.perTestCost || "",
+      getPakistanDateTime().toISOString() // Timestamp
+    ]);
+
+    sheet.getRange(sheet.getLastRow()+1, 1, rows.length, 7).setValues(rows);
+  } catch (error) {
+    ErrorLogger.log('createMultipleWorkloadRecords', error, { id, workloads });
+    throw new Error('Failed to save workload records.');
+  }
+}
+
+/**************************
+ * CONTACT PERSON MANAGEMENT 
  **************************/
 function formatContactPersons(contactPersons) {
   // (OPTIONAL) If you still want to store a summary in the main record
@@ -442,87 +521,118 @@ function validateContactPerson(contact) {
     errors.push('Contact person name is required');
   }
   if (!contact.post || contact.post.trim() === '') {
-    errors.push('Contact person post is required');
+    errors.push('Contact person post is required'); 
   }
-  if (contact.number && !/^\+?[\d\s-]{10,}$/.test(contact.number)) {
-    errors.push('Invalid contact number format');
+  // Only validate number if provided
+  if (contact.number && contact.number.trim() !== '' && 
+      !/^\+?\d{11,13}$/.test(contact.number.replace(/\s+/g, ''))) {
+    errors.push('Contact number must be 11-13 digits, optionally starting with +');
   }
   return errors;
 }
 
-
-/**************************
- * WORKLOAD MANAGEMENT
- **************************/
-/**
- * Creates a workload record in the WORKLOAD sheet.
- * If all workload fields are empty, it does nothing.
- * @param {string} id - The unique ID for the record.
- * @param {string} customer - The customer's name.
- * @param {Array} workloads - An array of workload objects.
- */
-function createMultipleWorkloadRecords(id,customer, workloads) {
-  try {
-    if (!Array.isArray(workloads) || workloads.length === 0) return;
-
-    const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("WORKLOAD");
-    // Suppose columns = A: ID, B:Customer , C:Competitor, D:CompetitorModel,
-    //                  E:DailyWorkload, F:PerTestCost, G:Timestamp
-
-    const rows = workloads.map(wl => [
-      id,
-      customer || "",
-      wl.competitor || "",
-      wl.competitorModel || "",
-      wl.dailyWorkload || "",
-      wl.perTestCost || "",
-      new Date().toISOString() // Timestamp
-    ]);
-
-    sheet.getRange(sheet.getLastRow()+1, 1, rows.length, 7).setValues(rows);
-  } catch (error) {
-    ErrorLogger.log('createMultipleWorkloadRecords', error, { id, workloads });
-    throw new Error('Failed to save workload records.');
-  }
-}
-
-
-
-/**************************
- * CONTACT PERSONS - SEPARATE SHEET
- **************************/
-/**
- * For each contact person, append a row to the CONTACTS sheet:
- *  [ ID, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT ]
- */
 function createContactsRecords(id, customerName, contactPersons, username) {
   try {
     if (!Array.isArray(contactPersons) || contactPersons.length === 0) return;
 
-    // Build rows
-    const rows = contactPersons.map(person => {
-      const name = sanitizeInput(person.name);
-      const post = sanitizeInput(person.post);
-      const number = sanitizeInput(person.number);
-      new Date().toISOString();
-      return [id, customerName, name, post, number,new Date().toISOString()];
+    const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("CONTACTS");
+    // Columns: A: ID, B: Customer, C: Person Name, D: Designation, E: Contact Number, F: Timestamp
+
+    const existingData = readRecord(Config.SPREADSHEET.RANGES.CONTACTS);
+
+    const rowsToAppend = [];
+
+    contactPersons.forEach(person => {
+      // Check for duplication based on name and post
+      const duplicate = existingData.find(row => 
+        row[2].toUpperCase() === person.name.toUpperCase() &&
+        row[3].toUpperCase() === person.post.toUpperCase()
+      );
+
+      if (!duplicate) {
+        // If no duplicate, append as new record
+        rowsToAppend.push([
+          id, 
+          customerName,
+          person.name.toUpperCase(),
+          person.post.toUpperCase(), 
+          person.number,
+          getPakistanDateTime().toISOString()
+        ]);
+      } else {
+        // Optionally, update existing record or skip
+        // For example, update contact number and timestamp
+        const rowIndex = existingData.indexOf(duplicate) + 2; // Sheets are 1-indexed
+        sheet.getRange(rowIndex, 5).setValue(person.number);
+        sheet.getRange(rowIndex, 6).setValue(getPakistanDateTime().toISOString());
+
+        // Log the update
+        AuditLogger.log('Updated Existing Contact', username, { 
+          id, 
+          username,
+          customerName, 
+          contactName: person.name, 
+          contactPost: person.post 
+        });
+      }
     });
 
-    const valueRange = Sheets.newValueRange();
-    valueRange.values = rows;
+    if (rowsToAppend.length > 0) {
+      const valueRange = Sheets.newValueRange();
+      valueRange.values = rowsToAppend;
 
-    Sheets.Spreadsheets.Values.append(
-      valueRange,
-      Config.SPREADSHEET.ID,
-      Config.SPREADSHEET.RANGES.CONTACTS,
-      { valueInputOption: "RAW" }
-    );
-    // After successful reset
-    AuditLogger.log('Created Contact #', username, { success: true });
+      Sheets.Spreadsheets.Values.append(
+        valueRange,
+        Config.SPREADSHEET.ID, 
+        Config.SPREADSHEET.RANGES.CONTACTS,
+        { valueInputOption: "RAW" }
+      );
+
+      // Log the additions
+      AuditLogger.log('Added New Contacts', username, { 
+        customerName, 
+        contactsAdded: rowsToAppend.map(row => row[2]) 
+      });
+    }
+
   } catch (error) {
     ErrorLogger.log('createContactsRecords', error, { id, customerName, contactPersons });
     throw new Error('Failed to save contact records.');
   }
+}
+
+function getExistingContacts(customerId) {
+    try {
+        const data = readRecord(Config.SPREADSHEET.RANGES.CONTACTS);
+        
+        // Create a Map to store unique contacts using name+post as key
+        const uniqueContacts = new Map();
+        
+        data
+            .filter(row => row[2] === customerId) // Corrected index for Customer
+            .forEach(row => {
+                const key = `${row[3]}_${row[4]}`; // name_post as unique key
+                // Keep most recent entry based on timestamp
+                if (!uniqueContacts.has(key) || 
+                    new Date(row[6]) > new Date(uniqueContacts.get(key).timestamp)) {
+                    uniqueContacts.set(key, {
+                        name: row[3],
+                        post: row[4],
+                        number: row[5],
+                        timestamp: row[6]
+                    });
+                }
+            });
+
+        // Convert Map values to array and sort by name
+        return Array.from(uniqueContacts.values())
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(({name, post, number}) => ({name, post, number}));
+            
+    } catch (error) {
+        ErrorLogger.log('getExistingContacts', error, { customerId });
+        return [];
+    }
 }
 
 
@@ -621,7 +731,7 @@ function processForm(formObject, currentUser, token) {
       formObject.Flags,
       formObject.VISIT_DESCRIPTION,
       formObject.IMAGE || "",
-      new Date().toLocaleString(),
+      getPakistanDateTime().toLocaleString(),
       formattedContacts,  // store the contact summary
       nextVisit
     ]];
@@ -671,39 +781,34 @@ function generateUniqueId() {
  * ADD NEW CUSTOMER
  **************************/
 function addNewCustomerWithCity(region, city, customerName, username, token) {
- try {
-   if (!sessionManager.validateSession(username, token)) {
-     throw new Error('Invalid session');
-   }
+  try {
+    if (!sessionManager.validateSession(username, token)) {
+      throw new Error('Invalid session');
+    }
 
-   region = sanitizeInput(region);
-   city = sanitizeInput(city); 
-   customerName = sanitizeInput(customerName);
+    region = sanitizeInput(region);
+    city = sanitizeInput(city); 
+    customerName = sanitizeInput(customerName);
 
-   const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("DATASHEETS");
-   
-   // Find first empty row in each range by checking existing data
-   let customerRow = 2;
-   let cityRegionRow = 2;
+    const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("DATASHEETS");
+    
+    // Find first empty row in customer range
+    let customerRow = 2;
+    while(sheet.getRange(customerRow, 1).getValue()) customerRow++;
 
-   while(sheet.getRange(customerRow, 1).getValue()) customerRow++;
-   while(sheet.getRange(cityRegionRow, 9).getValue()) cityRegionRow++;
+    // Add data to first empty row
+    sheet.getRange(customerRow, 1, 1, 3).setValues([[region, customerName, city]]);
 
-   // Add data to first empty rows
-   sheet.getRange(customerRow, 1, 1, 3).setValues([[region, customerName, city]]);
-   sheet.getRange(cityRegionRow, 9, 1, 2).setValues([[region, city]]);
+    AuditLogger.log('ADD_CUSTOMER', username, { 
+      region, city, customerName,
+      customerRow
+    });
 
-   AuditLogger.log('ADD_CUSTOMER', username, { 
-     region, city, customerName,
-     customerRow,
-     cityRegionRow  
-   });
-
-   return "New customer added successfully!";
- } catch (error) {
-   ErrorLogger.log('addNewCustomerWithCity', error, { region, city, customerName, username });
-   throw new Error('Failed to add new customer: ' + error.message);
- }
+    return "New customer added successfully!";
+  } catch (error) {
+    ErrorLogger.log('addNewCustomerWithCity', error, { region, city, customerName, username });
+    throw new Error('Failed to add new customer: ' + error.message);
+  }
 }
 /**************************
  * EXPORT FUNCTIONS
@@ -809,9 +914,10 @@ function deleteTempExportFile() {
  **************************/
 class AuditLogger {
   static async log(action, username, details = {}) {
+       
     try {
       const auditLog = [
-        new Date().toISOString(),
+        getPakistanDateTime().toISOString(),
         username,
         action,
         JSON.stringify(details)
@@ -838,7 +944,19 @@ function sanitizeInput(input) {
     .replace(/['"]/g, '') // Remove quotes
     .substring(0, 1000); // Limit length
 }
+/**************************
+ * helper function pak time
+ **************************/
 
+function getPakistanDateTime() {
+  // Create date in UTC
+  const date = new Date();
+  
+  // Convert to Pakistan time (UTC+5)
+  const pkTime = new Date(date.getTime() + (5 * 60 * 60 * 1000));
+  
+  return pkTime;
+}
 
 /**************************
  * TEST FUNCTIONS

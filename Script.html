@@ -2,69 +2,69 @@
   /* =====================================
      Global Variables -- Script.html
      ===================================== */
-  let userAvatarUrl = null; // Stores the user's avatar URL after login
-  window.currentUser = null; // Stores the current user's username
-  window.sessionToken = null; // Stores the session token
-
+  let userAvatarUrl = null;         // Stores the user's avatar URL after login
+  window.currentUser = null;        // Stores the current user's username
+  window.sessionToken = null;       // Stores the session token
+  window.existingContactsData = []; // Stores existing contacts (from server)
+  
   /* =====================================
      Event Listeners Binding on DOM Content Loaded
      ===================================== */
-
-      /* =====================================
-     For New Customer addition
-     ===================================== */
   document.addEventListener('DOMContentLoaded', function() {
-    // Bind Add New Customer Button
+
+    /***********************************************
+     * NEW CUSTOMER ADDITION (BUTTON & FORM)
+     ***********************************************/
     const addCustomerBtn = document.getElementById('addCustomerButton');
     if (addCustomerBtn) {
       addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
     }
 
-    // Bind Save New Customer Button
     const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
     if (saveCustomerBtn) {
       saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
     }
-     /* =====================================
-     For More Contact Numbers
-     ===================================== */
-    // Bind Add Another Contact Person Button
+
+    /***********************************************
+     * MANUAL CONTACTS (BUTTON TO ADD MORE)
+     ***********************************************/
     const addContactPersonBtn = document.getElementById('addContactPersonBtn');
     if (addContactPersonBtn) {
-      addContactPersonBtn.addEventListener('click', addContactPerson);
+      addContactPersonBtn.addEventListener('click', function() {
+        addContactPerson(); // Add a new manual contact person
+      });
     }
 
-    // Event Delegation for Remove Contact Person Buttons
-    const contactPersonsContainer = document.getElementById('contactPersonsContainer');
-    if (contactPersonsContainer) {
-      contactPersonsContainer.addEventListener('click', function(event) {
+    // Event delegation for removing manual contacts
+    const manualContactsContainer = document.getElementById('manualContactsContainer');
+    if (manualContactsContainer) {
+      manualContactsContainer.addEventListener('click', function(event) {
         if (event.target && event.target.classList.contains('remove-contact')) {
           removeContactPerson(event.target);
         }
       });
     }
-  /* =====================================
-     For Work load Lay out
-     ===================================== */
-    const addWorkloadBtn = document.getElementById('addWorkloadBtn');
-      if (addWorkloadBtn) {
-        addWorkloadBtn.addEventListener('click', addWorkloadItem);
-      }
 
-      // Event delegation for removing workload items
-      const workloadContainer = document.getElementById('workloadContainer');
-      if (workloadContainer) {
-        workloadContainer.addEventListener('click', function(e) {
-          if (e.target && e.target.classList.contains('remove-workload')) {
-            removeWorkloadItem(e.target);
-          }
-        });
-      }
-   
-  /* =====================================
-             Button Workings
-     ===================================== */
-    // Bind Modal Response Buttons
+    /***********************************************
+     * WORKLOAD LAYOUT
+     ***********************************************/
+    const addWorkloadBtn = document.getElementById('addWorkloadBtn');
+    if (addWorkloadBtn) {
+      addWorkloadBtn.addEventListener('click', addWorkloadItem);
+    }
+
+    const workloadContainer = document.getElementById('workloadContainer');
+    if (workloadContainer) {
+      workloadContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-workload')) {
+          removeWorkloadItem(e.target);
+        }
+      });
+    }
+
+    /***********************************************
+     * BUTTONS & MODALS (ADD MORE, CLOSE ERROR, ETC.)
+     ***********************************************/
     const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
     const noAddMoreBtn = document.getElementById('noAddMoreBtn');
     if (yesAddMoreBtn) {
@@ -78,37 +78,19 @@
       });
     }
 
-    // Bind Close Error Modal Button
     const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
     if (closeErrorModalBtn) {
       closeErrorModalBtn.addEventListener('click', closeErrorModal);
     }
 
-    // Bind Login Button to the login Function
+    /***********************************************
+     * LOGIN & FORGOT PASSWORD
+     ***********************************************/
     const loginBtn = document.getElementById('loginButton');
     if (loginBtn) {
       loginBtn.addEventListener('click', login);
     }
 
-    // Bind Remove Image Button to the removeImage Function
-    const removeImageBtn = document.getElementById('removeImageButton');
-    if (removeImageBtn) {
-      removeImageBtn.addEventListener('click', removeImage);
-    }
-
-    // Bind Image Upload Change Event to the previewImage Function
-    const imageUploadInput = document.getElementById('imageUpload');
-    if (imageUploadInput) {
-      imageUploadInput.addEventListener('change', previewImage);
-    }
-
-    // Bind Export Data Button (if you have a dedicated button)
-    const exportBtn = document.getElementById('exportDataButton');
-    if (exportBtn) {
-      exportBtn.addEventListener('click', exportSalesData);
-    }
-
-    // Forgot Password Modal
     const forgotLink = document.getElementById('forgotPasswordLink');
     const forgotPasswordModal = document.getElementById('forgotPasswordModal');
     const resetButton = document.getElementById('resetPasswordButton');
@@ -150,16 +132,62 @@
         forgotPasswordModal.style.display = 'none';
       });
     }
+
+    /***********************************************
+     * IMAGE HANDLING (UPLOAD, PREVIEW, REMOVE)
+     ***********************************************/
+    const removeImageBtn = document.getElementById('removeImageButton');
+    if (removeImageBtn) {
+      removeImageBtn.addEventListener('click', removeImage);
+    }
+
+    const imageUploadInput = document.getElementById('imageUpload');
+    if (imageUploadInput) {
+      imageUploadInput.addEventListener('change', previewImage);
+    }
+
+    /***********************************************
+     * EXPORT DATA (IF BUTTON EXISTS)
+     ***********************************************/
+    const exportBtn = document.getElementById('exportDataButton');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportSalesData);
+    }
+
+    /***********************************************
+     * CHANGE CUSTOMER BUTTON (IF YOU WANT TO ALLOW RE-SELECTION)
+     ***********************************************/
+    const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+    if (changeCustomerBtn) {
+      changeCustomerBtn.addEventListener('click', function() {
+        // Re-enable the dropdown
+        const customerSelect = document.getElementById('Customer');
+        if (customerSelect) {
+          customerSelect.disabled = false;
+        }
+
+        // Hide the button
+        changeCustomerBtn.style.display = 'none';
+
+        // Optionally hide any label that shows the selected customer
+        const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
+        if (selectedCustomerLabel) {
+          selectedCustomerLabel.style.display = 'none';
+          selectedCustomerLabel.textContent = '';
+        }
+
+        // Reset existing contacts
+        resetContactsSection();
+      });
+    }
   });
 
   /* =====================================
      LOGIN FUNCTIONALITY
      ===================================== */
   function login() {
-    // Display the loading spinner
     document.getElementById('loginSpinner').style.display = 'inline-block';
 
-    // Retrieve user inputs
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
@@ -170,18 +198,17 @@
       return;
     }
 
-    // Call server-side 'checkLogin'
+    // Server-side checkLogin
     google.script.run
       .withSuccessHandler(function(response) {
         document.getElementById('loginSpinner').style.display = 'none';
-       
         if (response.success) {
-          // Hide the login form, show main form
+          // Hide login, show main form
           document.getElementById('loginForm').style.display = 'none';
           document.getElementById('mainForm').style.display = 'block';
           document.getElementById('extractionLinkAfterLogin').style.display = 'block';
 
-          // Hide the extraction link before login
+          // Hide extraction link before login
           const extractionLinkBeforeLogin = document.getElementById('extractionLinkBeforeLogin');
           if (extractionLinkBeforeLogin) {
             extractionLinkBeforeLogin.style.display = 'none';
@@ -198,7 +225,7 @@
           const welcomeMsg = document.getElementById('welcomeMessage');
           welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - For Sales Report Form`;
 
-          // Handle avatar
+          // If there's an avatar
           if (response.avatarUrl) {
             const avatarImg = document.getElementById('salesPersonAvatar');
             let cleanUrl = response.avatarUrl.trim();
@@ -206,12 +233,11 @@
             avatarImg.style.display = 'inline';
           }
 
-          // Store global user info
+          // Store user info globally
           window.currentUser = response.username;
           window.sessionToken = response.token;
-
         } else {
-          // Show login error
+          // Show invalid login error
           document.getElementById('loginError').style.display = 'block';
         }
       })
@@ -222,13 +248,157 @@
       })
       .checkLogin(username, password);
   }
+
   /* =====================================
-         CONTACT PERSON MANAGEMENT
+     EXISTING CONTACTS MANAGEMENT
      ===================================== */
-  function addContactPerson() {
+  function populateExistingContacts(customerId) {
+    google.script.run
+      .withSuccessHandler(function(contacts) {
+        const existingContactsContainer = document.getElementById('existingContactsContainer');
+        existingContactsContainer.innerHTML = ''; // Clear old contents
+
+        // Disable the Customer dropdown after selection
+        const customerSelect = document.getElementById('Customer');
+        if (customerSelect) {
+          customerSelect.disabled = true;
+        }
+
+        // Optionally show a label for the selected customer
+        const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
+        if (selectedCustomerLabel) {
+          selectedCustomerLabel.textContent = `Selected Customer: ${customerId}`;
+          selectedCustomerLabel.style.display = 'block';
+        }
+
+        // Show "Change Customer" button if needed
+        const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+        if (changeCustomerBtn) {
+          changeCustomerBtn.style.display = 'inline-block';
+        }
+
+        if (contacts.length > 0) {
+          // Create heading
+          const heading = document.createElement('h4');
+          heading.textContent = 'Existing Contact Persons:';
+          existingContactsContainer.appendChild(heading);
+
+          // List each existing contact with a checkbox
+          contacts.forEach((contact, index) => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `existingContact_${index}`;
+            checkbox.value = index;
+            checkbox.classList.add('existing-contact-checkbox');
+
+            const label = document.createElement('label');
+            label.htmlFor = `existingContact_${index}`;
+            label.textContent = `${contact.name} (${contact.post}) - ${contact.number}`;
+
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('existing-contact');
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+
+            existingContactsContainer.appendChild(wrapper);
+          });
+
+          // Add a button to add all selected existing contacts
+          const addSelectedBtn = document.createElement('button');
+          addSelectedBtn.type = 'button';
+          addSelectedBtn.id = 'addSelectedContactsBtn';
+          addSelectedBtn.classList.add('add-selected-contacts-btn');
+          addSelectedBtn.textContent = 'Add Selected Contacts';
+          addSelectedBtn.addEventListener('click', addSelectedContacts);
+          existingContactsContainer.appendChild(addSelectedBtn);
+        } else {
+          // If no contacts, show a message
+          const message = document.createElement('p');
+          message.className = 'no-contacts-message';
+          message.textContent = 'No existing contacts found. Please add contacts manually.';
+          existingContactsContainer.appendChild(message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Failed to load existing contacts:', error);
+        showCustomError('Failed to load existing contacts. Please try again.');
+      })
+      .getExistingContacts(customerId);
+  }
+
+
+  function addSelectedContacts() {
+    const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
+    const manualContainer = document.getElementById('contactPersonsContainer'); 
+    checkboxes.forEach(checkbox => {
+      const contactIndex = checkbox.value;
+      const contact = window.existingContactsData[contactIndex];
+      if (contact) {
+        // Check for duplicates: name + post + number
+        const alreadyExists = Array.from(manualContainer.querySelectorAll('.contact-person')).some(cp => {
+          const existingName = cp.querySelector('.contact-name').value.trim().toUpperCase();
+          const existingPost = cp.querySelector('.contact-post').value.trim().toUpperCase();
+          const existingNumber = cp.querySelector('.contact-number').value.trim().toUpperCase();
+
+          return (existingName === contact.name.toUpperCase()) &&
+                 (existingPost === contact.post.toUpperCase()) &&
+                 (existingNumber === (contact.number !== 'N/A' ? contact.number.toUpperCase() : ''));
+        });
+
+        if (!alreadyExists) {
+          // If not a duplicate, add this contact as a new "manual" contact row
+          addContactPerson({
+            name: contact.name,
+            post: contact.post,
+            number: contact.number !== 'N/A' ? contact.number : ''
+          });
+        }
+      }
+    });
+    // Optionally uncheck the checkboxes
+    checkboxes.forEach(cb => cb.checked = false);
+  }
+
+  function resetContactsSection() {
+    const existingContactsContainer = document.getElementById('existingContactsContainer');
+    if (existingContactsContainer) {
+      existingContactsContainer.innerHTML = '';
+    }
+
+    // Reset the manual container to a single blank contact
+    const contactPersonsContainer = document.getElementById('contactPersonsContainer');
+    contactPersonsContainer.innerHTML = `
+      <div class="contact-person" data-index="0">
+        <div class="contact-header">
+          <h4>Contact Person <span class="contact-letter">A</span></h4>
+          <button type="button" class="remove-contact" style="display: none;">×</button>
+        </div>
+        <div class="contact-fields">
+          <div class="field-group">
+            <label>Name:</label>
+            <input type="text" class="contact-name" placeholder="Enter name">
+          </div>
+          <div class="field-group">
+            <label>Post:</label>
+            <input type="text" class="contact-post" placeholder="Enter designation">
+          </div>
+          <div class="field-group">
+            <label>Contact Number:</label>
+            <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* =====================================
+     MANUAL CONTACT PERSONS (CORE FUNCTIONS)
+     ===================================== */
+  function addContactPerson(existingData = null) {
     const container = document.getElementById('contactPersonsContainer');
     const contacts = container.getElementsByClassName('contact-person');
-    // Limit to 26
+
+    // Limit to 26 letters
     if (contacts.length >= 26) {
       showCustomError('Maximum number of contact persons (26) reached');
       return;
@@ -238,15 +408,29 @@
     const template = contacts[0].cloneNode(true);
     const newIndex = contacts.length;
 
-    // Update letter
+    // Update letter label
     template.setAttribute('data-index', newIndex);
     template.querySelector('.contact-letter').textContent = 
       String.fromCharCode(65 + newIndex);
 
-    // Clear inputs
-    template.querySelectorAll('input').forEach(input => {
-      input.value = '';
-      input.classList.remove('error');
+    const nameInput = template.querySelector('.contact-name');
+    const postInput = template.querySelector('.contact-post');
+    const numberInput = template.querySelector('.contact-number');
+
+    if (existingData) {
+      // Populate from existing data
+      nameInput.value = existingData.name;
+      postInput.value = existingData.post;
+      numberInput.value = existingData.number;
+    } else {
+      // Otherwise clear
+      nameInput.value = '';
+      postInput.value = '';
+      numberInput.value = '';
+    }
+
+    template.querySelectorAll('input').forEach(inp => {
+      inp.classList.remove('error');
     });
 
     // Show remove button
@@ -257,6 +441,9 @@
   }
 
   function removeContactPerson(button) {
+    // Already corrected to confirm & remove
+    if (!confirm('Are you sure you want to remove this contact?')) return;
+
     const contactPerson = button.closest('.contact-person');
     if (contactPerson) {
       contactPerson.remove();
@@ -268,26 +455,26 @@
     const contacts = document.querySelectorAll('.contact-person');
     contacts.forEach((contact, index) => {
       contact.setAttribute('data-index', index);
-      contact.querySelector('.contact-letter').textContent = 
-        String.fromCharCode(65 + index);
+      const letter = String.fromCharCode(65 + index);
+      contact.querySelector('.contact-letter').textContent = letter;
     });
   }
 
   function validateContactPersons() {
     const contacts = document.querySelectorAll('.contact-person');
     let isValid = true;
-    
+
     contacts.forEach(contact => {
       const nameInput = contact.querySelector('.contact-name');
       const postInput = contact.querySelector('.contact-post');
       const numberInput = contact.querySelector('.contact-number');
-      
-      // Reset errors
+
+      // Clear old errors
       nameInput.classList.remove('error');
       postInput.classList.remove('error');
       numberInput.classList.remove('error');
-      
-      // required fields
+
+      // Check required fields
       if (!nameInput.value.trim()) {
         nameInput.classList.add('error');
         isValid = false;
@@ -296,79 +483,86 @@
         postInput.classList.add('error');
         isValid = false;
       }
-      
-      // phone format
+
+      // Phone format check if provided
       if (numberInput.value.trim() && 
-          !/^\+?[\d\s-]{10,}$/.test(numberInput.value.trim())) {
+          !/^\+?\d{11,13}$/.test(numberInput.value.replace(/\s+/g, ''))) {
         numberInput.classList.add('error');
         isValid = false;
       }
     });
-    
+
     return isValid;
   }
 
   function getContactPersonsData() {
-    const contacts = document.querySelectorAll('.contact-person');
+    const contacts = document.querySelectorAll('#contactPersonsContainer .contact-person');
     return Array.from(contacts).map(contact => ({
       name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
       post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
       number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
     }));
   }
-    /* =====================================
-     Work Load Management
+
+  /* =====================================
+     WORKLOAD MANAGEMENT
      ===================================== */
+  function addWorkloadItem() {
+    const container = document.getElementById('workloadContainer');
+    const items = container.getElementsByClassName('workload-item');
+    const template = items[0].cloneNode(true);
+    const newIndex = items.length;
 
-function addWorkloadItem() {
-  const container = document.getElementById('workloadContainer');
-  const items = container.getElementsByClassName('workload-item');
-  const template = items[0].cloneNode(true);
-  const newIndex = items.length;
+    template.querySelector('.workload-letter').textContent = String.fromCharCode(65 + newIndex);
 
-  // Update workload number
-  template.querySelector('.workload-letter').textContent = String.fromCharCode(65 + newIndex); // Using letters A, B, C, etc.
+    template.querySelectorAll('input').forEach(input => {
+      input.value = '';
+    });
 
-  // Clear inputs
-  template.querySelectorAll('input').forEach(input => {
-    input.value = '';
-  });
+    const removeBtn = template.querySelector('.remove-workload');
+    removeBtn.style.display = 'block';
 
-  // Show remove button
-  const removeBtn = template.querySelector('.remove-workload');
-  removeBtn.style.display = 'block';
+    container.appendChild(template);
+  }
 
-  container.appendChild(template);
-}
-
-function updateWorkloadIndices() {
-  const items = document.querySelectorAll('.workload-item');
-  items.forEach((item, index) => {
-    item.querySelector('.workload-letter').textContent = String.fromCharCode(65 + index);
-  });
-}
-    // Gather the workload data
-    function getWorkloadData() {
-      const items = document.querySelectorAll('.workload-item');
-      return Array.from(items).map(item => ({
-        competitor: sanitizeInput(item.querySelector('.workload-competitor').value),
-        competitorModel: sanitizeInput(item.querySelector('.workload-model').value),
-        dailyWorkload: sanitizeInput(item.querySelector('.workload-daily').value),
-        perTestCost: sanitizeInput(item.querySelector('.workload-cost').value)
-      }));
+  function removeWorkloadItem(button) {
+    const workloadItem = button.closest('.workload-item');
+    if (workloadItem) {
+      workloadItem.remove();
+      updateWorkloadIndices();
     }
+  }
+
+  function updateWorkloadIndices() {
+    const items = document.querySelectorAll('.workload-item');
+    items.forEach((item, index) => {
+      item.querySelector('.workload-letter').textContent = String.fromCharCode(65 + index);
+    });
+  }
+
+  function getWorkloadData() {
+    const items = document.querySelectorAll('.workload-item');
+    return Array.from(items).map(item => ({
+      competitor: sanitizeInput(item.querySelector('.workload-competitor').value),
+      competitorModel: sanitizeInput(item.querySelector('.workload-model').value),
+      dailyWorkload: sanitizeInput(item.querySelector('.workload-daily').value),
+      perTestCost: sanitizeInput(item.querySelector('.workload-cost').value)
+    }));
+  }
 
   /* =====================================
      DATE VALIDATION
      ===================================== */
   function validateDates() {
-    const visitDate = new Date(document.getElementById('dateOfVisit').value);
-    const nextVisit = document.getElementById('nextVisit').value ? 
-                     new Date(document.getElementById('nextVisit').value) : null;
+    const visitDateValue = document.getElementById('dateOfVisit').value;
+    const nextVisitValue = document.getElementById('nextVisit').value;
+
+    const visitDate = visitDateValue ? new Date(visitDateValue) : null;
+    const nextVisit = nextVisitValue ? new Date(nextVisitValue) : null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (visitDate > today) {
+    if (visitDate && visitDate > today) {
       showCustomError('Visit date cannot be in the future');
       return false;
     }
@@ -377,7 +571,7 @@ function updateWorkloadIndices() {
         showCustomError('Next visit date cannot be in the past');
         return false;
       }
-      if (nextVisit <= visitDate) {
+      if (visitDate && nextVisit <= visitDate) {
         showCustomError('Next visit date must be after visit date');
         return false;
       }
@@ -389,6 +583,7 @@ function updateWorkloadIndices() {
      DROPDOWNS & LOADERS
      ===================================== */
   function populateDropdowns() {
+    // We'll fetch the following dropdowns
     const dropdowns = ['Region', 'City', 'Customer', 'Product', 'Department', 'Flags', 'AnalyzerModel'];
     
     dropdowns.forEach(function(dd) {
@@ -398,22 +593,47 @@ function updateWorkloadIndices() {
           populateDropdown(dd, data);
           showLoadingDots(`${dd.toLowerCase()}Loading`, false);
 
-          if (dd === 'City' || dd === 'Customer' || dd === 'AnalyzerModel') {
+          // If it's the AnalyzerModel, disable it until product is chosen
+          if (dd === 'AnalyzerModel') {
             document.getElementById(dd).disabled = true;
           }
 
-          // Region -> filter city & customers
-          if (dd === 'Region') {
-            const regionSelect = document.getElementById('Region');
-            regionSelect.addEventListener('change', function() {
-              filterCityByRegion();
-              filterCustomersByRegion();
+          // If "Customer" changes -> fetch existing contacts
+          if (dd === 'Customer') {
+            const customerSelect = document.getElementById('Customer');
+            customerSelect.addEventListener('change', function(e) {
+              resetContactsSection();
+
+              if (e.target.value) {
+                google.script.run
+                  .withSuccessHandler(function(contacts) {
+                    window.existingContactsData = contacts;
+                    populateExistingContacts(e.target.value);
+                  })
+                  .getExistingContacts(e.target.value);
+              }
             });
           }
-          // Product -> filter analyzers
+
+          // Region -> City
+          if (dd === 'Region') {
+            document.getElementById('Region').addEventListener('change', filterCityByRegion);
+          }
+
+          // City -> Customer
+          if (dd === 'City') {
+            document.getElementById('City').addEventListener('change', filterCustomersByCity);
+          }
+
+          // Product -> AnalyzerModel
           if (dd === 'Product') {
-            const productSelect = document.getElementById('Product');
-            productSelect.addEventListener('change', filterAnalyzerByProduct);
+            document.getElementById('Product').addEventListener('change', filterAnalyzerByProduct);
+          }
+
+          // If Flags -> Category
+          if (dd === 'Flags') {
+            const flagsSelect = document.getElementById('Flags');
+            flagsSelect.addEventListener('change', filterCategoryByFlag);
           }
         })
         .withFailureHandler(function(error) {
@@ -431,7 +651,6 @@ function updateWorkloadIndices() {
       console.error('Dropdown element not found:', id);
       return;
     }
-    
     try {
       select.innerHTML = '<option value="">Select</option>';
       if (data && Array.isArray(data) && data.length > 0) {
@@ -453,14 +672,13 @@ function updateWorkloadIndices() {
   function filterCityByRegion() {
     const region = document.getElementById('Region').value;
     const citySelect = document.getElementById('City');
-    const customerSelect = document.getElementById('Customer');
-    
     if (region) {
       showLoadingDots('cityLoading', true);
       google.script.run
         .withSuccessHandler(function(cities) {
           populateDropdown('City', cities);
           citySelect.disabled = false;
+          clearDropdown('Customer');
           showLoadingDots('cityLoading', false);
         })
         .withFailureHandler(function(error) {
@@ -472,16 +690,37 @@ function updateWorkloadIndices() {
     } else {
       clearDropdown('City');
       clearDropdown('Customer');
-      citySelect.disabled = true;
-      customerSelect.disabled = true;
       showLoadingDots('cityLoading', false);
+    }
+  }
+
+  function filterCustomersByCity() {
+    const city = document.getElementById('City').value;
+    const customerSelect = document.getElementById('Customer');
+    if (city) {
+      showLoadingDots('customerLoading', true);
+      google.script.run
+        .withSuccessHandler(function(customers) {
+          populateDropdown('Customer', customers);
+          customerSelect.disabled = false;
+          showLoadingDots('customerLoading', false);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load customers:', error);
+          showLoadingDots('customerLoading', false);
+          showCustomError('Failed to load customers. Please try again.');
+        })
+        .getCustomersByCity(city);
+    } else {
+      clearDropdown('Customer');
+      customerSelect.disabled = true;
+      showLoadingDots('customerLoading', false);
     }
   }
 
   function filterAnalyzerByProduct() {
     const product = document.getElementById('Product').value;
     const analyzerSelect = document.getElementById('AnalyzerModel');
-    
     if (product) {
       showLoadingDots('analyzerLoading', true);
       google.script.run
@@ -503,29 +742,47 @@ function updateWorkloadIndices() {
     }
   }
 
-  function filterCustomersByRegion() {
-    const region = document.getElementById('Region').value;
-    const customerSelect = document.getElementById('Customer');
-    
-    if (region) {
-      showLoadingDots('customerLoading', true);
-      google.script.run
-        .withSuccessHandler(function(customers) {
-          populateDropdown('Customer', customers);
-          customerSelect.disabled = false;
-          showLoadingDots('customerLoading', false);
-        })
-        .withFailureHandler(function(error) {
-          console.error('Failed to load customers:', error);
-          showLoadingDots('customerLoading', false);
-          showCustomError('Failed to load customers. Please try again.');
-        })
-        .getCustomersByRegion(region);
-    } else {
-      clearDropdown('Customer');
-      customerSelect.disabled = true;
-      showLoadingDots('customerLoading', false);
+  /**
+   * Called when the "Flags" dropdown changes.
+   * Fetches the matching Category from the server and updates the Category dropdown.
+   */
+  function filterCategoryByFlag() {
+    const product = document.getElementById('Product').value;
+    const flag = document.getElementById('Flags').value;
+    const categorySelect = document.getElementById('Category');
+
+    // If product or flag is missing, clear Category
+    if (!product || !flag) {
+      categorySelect.innerHTML = '<option value="">Select</option>';
+      categorySelect.disabled = true;
+      return;
     }
+
+    // Make a server call to get the Category
+    google.script.run
+      .withSuccessHandler(function(categoryValue) {
+        // If no category found, we set the dropdown to empty
+        if (!categoryValue) {
+          categorySelect.innerHTML = '<option value="">No Category Found</option>';
+          categorySelect.disabled = true;
+          return;
+        }
+
+        // Otherwise, populate a single option
+        categorySelect.disabled = false;
+        categorySelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = categoryValue;
+        option.textContent = categoryValue;
+        categorySelect.appendChild(option);
+      })
+      .withFailureHandler(function(error) {
+        console.error('Failed to fetch category:', error);
+        showCustomError('Failed to fetch category. Please try again.');
+        categorySelect.innerHTML = '<option value="">Error</option>';
+        categorySelect.disabled = true;
+      })
+      .getCategoryByFlag(product, flag); 
   }
 
   function clearDropdown(id) {
@@ -542,15 +799,10 @@ function updateWorkloadIndices() {
       element.style.display = show ? 'inline-block' : 'none';
     }
   }
-  
+
   function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
-    return input
-      .trim()
-      .replace(/[<>]/g, '')
-      .replace(/[&]/g, 'and')
-      .replace(/['"]/g, '')
-      .substr(0, 1000);
+    return input.trim().replace(/[<>]/g, '').replace(/[&]/g, 'and').replace(/['"]/g, '').substr(0, 1000);
   }
 
   /* =====================================
@@ -560,7 +812,7 @@ function updateWorkloadIndices() {
     e.preventDefault();
     document.getElementById('submitSpinner').style.display = 'inline-block';
 
-    // Validate required fields
+    // Required fields
     const requiredFields = [
       'dateOfVisit','visitType','Region','City','Customer',
       'Department','Product','AnalyzerModel','Flags','VISIT_DESCRIPTION'
@@ -579,7 +831,7 @@ function updateWorkloadIndices() {
       }
     });
 
-    // Validate dates
+    // Validate date constraints
     if (!validateDates()) {
       isValid = false;
     }
@@ -596,11 +848,35 @@ function updateWorkloadIndices() {
       return;
     }
 
-    // Gather the data
+    // Handle image file if any
     const imageFile = document.getElementById('imageUpload').files[0];
 
-    // Finalize submission after reading image
     const finalizeSubmission = function(imageDataUrl) {
+      // Gather manual contacts
+      const manualContacts = getContactPersonsData();
+
+      // Gather selected existing contacts
+      const selectedCheckboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
+      const selectedExistingContacts = Array.from(selectedCheckboxes).map(cb => {
+        const index = cb.value;
+        const contact = window.existingContactsData[index];
+        return {
+          name: sanitizeInput(contact.name),
+          post: sanitizeInput(contact.post),
+          number: sanitizeInput(contact.number !== 'N/A' ? contact.number : '')
+        };
+      });
+
+      // Combine them, skipping duplicates
+      const allContacts = [...selectedExistingContacts, ...manualContacts];
+
+      // Now also fetch the Category 
+      const categorySelect = document.getElementById('Category');
+      const categoryValue = categorySelect && categorySelect.value 
+                            ? sanitizeInput(categorySelect.value) 
+                            : "";
+
+      // Build form object
       const formObject = {
         dateOfVisit: sanitizeInput(document.getElementById('dateOfVisit').value),
         visitType: sanitizeInput(document.getElementById('visitType').value),
@@ -613,13 +889,12 @@ function updateWorkloadIndices() {
         Product: sanitizeInput(document.getElementById('Product').value),
         AnalyzerModel: sanitizeInput(document.getElementById('AnalyzerModel').value),
         Flags: sanitizeInput(document.getElementById('Flags').value),
+        Category: categoryValue,
         VISIT_DESCRIPTION: sanitizeInput(document.getElementById('VISIT_DESCRIPTION').value),
         IMAGE: imageDataUrl || "",
-        contactPersons: getContactPersonsData(),
-        nextVisit: sanitizeInput(document.getElementById('nextVisit').value) || null,
-
-        // New workload fields
-        workloads: getWorkloadData(),
+        contactPersons: allContacts,
+        nextVisit: sanitizeInput(document.getElementById('nextVisit').value) || "",
+        workloads: getWorkloadData()
       };
 
       google.script.run
@@ -647,12 +922,16 @@ function updateWorkloadIndices() {
     }
   };
 
+  /**
+   * Resets the form to a fresh state
+   */
   function resetForm() {
     document.getElementById('dataForm').reset();
     document.getElementById('newCustomerField').style.display = 'none';
 
-    const container = document.getElementById('contactPersonsContainer');
-    const contacts = container.getElementsByClassName('contact-person');
+    // Reset manual container to one blank contact
+    const manualContainer = document.getElementById('manualContactsContainer');
+    const contacts = manualContainer.querySelectorAll('.contact-person');
     while (contacts.length > 1) {
       contacts[contacts.length - 1].remove();
     }
@@ -661,6 +940,26 @@ function updateWorkloadIndices() {
       input.classList.remove('error');
     });
     removeImage();
+
+    // Clear existing contacts
+    resetContactsSection();
+
+    // Re-enable the Customer dropdown if desired
+    const customerSelect = document.getElementById('Customer');
+    if (customerSelect) {
+      customerSelect.disabled = false;
+    }
+
+    // Hide selectedCustomerLabel & changeCustomerBtn if used
+    const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
+    if (selectedCustomerLabel) {
+      selectedCustomerLabel.style.display = 'none';
+      selectedCustomerLabel.textContent = '';
+    }
+    const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+    if (changeCustomerBtn) {
+      changeCustomerBtn.style.display = 'none';
+    }
   }
 
   /* =====================================
@@ -769,6 +1068,10 @@ function updateWorkloadIndices() {
       showCustomError('Please select a region.');
       return;
     }
+    if (!city) {
+      showCustomError('Please enter a city.');
+      return;
+    }
     if (!customerName) {
       showCustomError('Please enter a customer name.');
       return;
@@ -849,14 +1152,14 @@ function updateWorkloadIndices() {
   }
 
   /* =====================================
-     EXPORT FUNCTIONS
+     EXPORT FUNCTIONS (CSV)
      ===================================== */
   function exportSalesData() {
     if (!window.currentUser || !window.sessionToken) {
       showCustomError('You must be logged in to export data.');
       return;
     }
-    
+
     if (!confirm('Are you sure you want to export your sales data?')) {
       return;
     }

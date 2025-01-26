@@ -23,7 +23,7 @@
        ===================================== -->
   <div class="header">
     <img src="https://nextekhealthcare.com/wp-content/uploads/2024/07/Logo-Red-Black-Png-1.png" alt="Company Logo">
-    <h1>Nextek Healthcare - Sales Report</h1>
+    <h1>Nextek Healthcare - Sales Report Form</h1>
     <div class="timestamp" id="timestamp">CURRENT DATE & TIME</div>
   </div>
 
@@ -90,11 +90,11 @@
        Main Form Container (Visible After Login)
        ===================================== -->
   <div class="main-form-container" id="mainForm">
-    
-    <!-- =====================================
-         Add New Customer (Manual) Button
-         ===================================== -->
+
+    <!-- Add Customer Manually Button -->
     <button id="addCustomerButton">Add New Customer (Manual)</button>
+
+    
 
     <!-- =====================================
          Add Customer Manual Form (Hidden by Default)
@@ -104,7 +104,7 @@
       
       <!-- Region Selection -->
       <div class="form-group">
-        <label for="addCustRegionSelect">Region:</label>
+        <label for="addCustRegionSelect" class="required">Region:</label>
         <select id="addCustRegionSelect" required>
           <option value="">Select Region</option>
           <option value="SOUTH">SOUTH</option>
@@ -116,33 +116,33 @@
       
       <!-- City Input -->
       <div class="form-group">
-        <label for="addCustCityInput">City:</label>
+        <label for="addCustCityInput" class="required">City:</label>
         <input type="text" id="addCustCityInput" placeholder="Enter city" required>
       </div>
       
       <!-- Customer Name Input -->
       <div class="form-group">
-        <label for="addCustNameInput">Customer Name:</label>
+        <label for="addCustNameInput" class="required">Customer Name:</label>
         <input type="text" id="addCustNameInput" placeholder="Enter customer name" required>
       </div>
       
       <!-- Save New Customer Button -->
-      <button type="button" id="saveNewCustomerButton">Save New Customer</button>
+      <div class="form-group button-group">
+        <button type="button" id="saveNewCustomerButton" class="primary-btn">Save Customer</button>
+        <button type="button" id="cancelAddCustomerButton" class="secondary-btn">Cancel</button>
+      </div>
     </form>
 
-    <!-- =====================================
-         Submit Sales Log Form
-         ===================================== -->
     <h2 style="margin-top: 20px;">Submit Sales Log</h2>
-    
-      <form id="dataForm">
-        <!-- 1) Date of Visit  -->
-        <div class="form-group">
-          <label for="dateOfVisit" class="required">Date of Visit:</label>
-          <input type="date" id="dateOfVisit" name="dateOfVisit" required aria-required="true">
-        </div>
 
-      <!-- 2) VISIT TYPE DROPDOWN -->
+    <form id="dataForm">
+      <!-- 1) Date of Visit -->
+      <div class="form-group">
+        <label for="dateOfVisit" class="required">Date of Visit:</label>
+        <input type="date" id="dateOfVisit" required aria-required="true">
+      </div>
+
+      <!-- 2) Visit Type -->
       <div class="form-group">
         <label for="visitType" class="required">Visit Type:</label>
         <select id="visitType" required aria-required="true">
@@ -154,113 +154,89 @@
         </select>
       </div>
 
-      <!-- 3) Region Selection -->
+      <!-- 3) Region -->
       <div class="form-group">
         <label for="Region" class="required">Region:</label>
-        <select id="Region" required aria-required="true">
-          <!-- Options will be populated dynamically -->
-        </select>
+        <select id="Region" required aria-required="true"></select>
       </div>
 
-      <!-- 4) City Selection -->
+      <!-- 4) City -->
       <div class="form-group">
         <label for="City" class="required">City:</label>
         <div class="input-container">
-          <select id="City" disabled required aria-required="true">
-            <!-- Options based on selected Region -->
-          </select>
+          <select id="City" disabled required aria-required="true"></select>
           <span class="loading-dots" id="cityLoading"></span>
         </div>
       </div>
 
-      <!-- 5) Customer Selection -->
+      <!-- 5) Customer -->
       <div class="form-group">
         <label for="Customer" class="required">Customer Name:</label>
         <div class="input-container">
-          <select id="Customer" disabled required aria-required="true">
-            <!-- Options based on selected Region -->
-          </select>
+          <select id="Customer" disabled required aria-required="true"></select>
           <span class="loading-dots" id="customerLoading"></span>
         </div>
       </div>
 
-      <!-- New Customer Field (Displayed If 'Add New Customer' Is Selected) -->
+      <!-- If 'Add New Customer' is selected, show newCustomerField -->
       <div class="form-group" id="newCustomerField" style="display:none;">
         <label for="newCustomer">New Customer Name:</label>
         <input type="text" id="newCustomer" placeholder="Enter new customer name">
       </div>
 
-      <!-- 6) Department Selection -->
+      <!-- 6) Department -->
       <div class="form-group">
         <label for="Department" class="required">Department:</label>
-        <select id="Department" required aria-required="true">
-          <!-- Options populated dynamically -->
-        </select>
+        <select id="Department" required aria-required="true"></select>
       </div>
 
-      <!-- 8) Product Selection -->
+      <!-- 8) Product -->
       <div class="form-group">
         <label for="Product" class="required">Product:</label>
-        <select id="Product" required aria-required="true">
-          <!-- Options populated dynamically -->
-        </select>
+        <select id="Product" required aria-required="true"></select>
       </div>
 
-      <!-- 9) Analyzer Model Selection -->
+      <!-- 9) Analyzer Model -->
       <div class="form-group">
         <label for="AnalyzerModel" class="required">Analyzer Model:</label>
         <div class="input-container">
-          <select id="AnalyzerModel" disabled required aria-required="true">
-            <!-- Options based on selected Product -->
-          </select>
+          <select id="AnalyzerModel" disabled required aria-required="true"></select>
           <span class="loading-dots" id="analyzerLoading" style="display:none;"></span>
         </div>
       </div>
 
-      <!-- 10) Flags Selection -->
+      <!-- 10) Flags -->
       <div class="form-group">
         <label for="Flags" class="required">Flags:</label>
-        <select id="Flags" required aria-required="true">
-          <!-- Options populated dynamically -->
-        </select>
+        <select id="Flags" required aria-required="true"></select>
       </div>
 
-      <!-- 11) Category Selection -->
+      <!-- 11) Category -->
       <div class="form-group">
         <label for="Category" class="required">Category:</label>
-        <select id="Category" disabled required aria-required="true">
-          <!-- Options populated dynamically -->
-        </select>
+        <select id="Category" disabled required aria-required="true"></select>
       </div>
 
       <!-- 12) Visit Details -->
       <div class="form-group">
-          <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
-          <textarea 
-            id="VISIT_DESCRIPTION" 
-            name="visitDescription"
-            required 
-            aria-required="true" 
-            placeholder="Enter visit details"
-          ></textarea>
-        </div>
+        <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
+        <textarea 
+          id="VISIT_DESCRIPTION"
+          name="visitDescription"
+          required aria-required="true"
+          placeholder="Enter visit details"
+        ></textarea>
+      </div>
 
       <!-- 13) Next Visit Date -->
-        <div class="form-group">
-          <label for="nextVisit">Next Visit Date (if required):</label>
-          <input 
-            type="date" 
-            id="nextVisit" 
-            name="nextVisit"
-            aria-label="Next Visit Date"
-          >
-        </div>
+      <div class="form-group">
+        <label for="nextVisit">Next Visit Date (if required):</label>
+        <input type="date" id="nextVisit" name="nextVisit" aria-label="Next Visit Date">
+      </div>
 
       <!-- 14) Workload Information -->
-          <!-- Workload Section -->
       <div class="form-group workload-section">
-            <label class="required">Workload Details:</label>
-      
+        <label>Workload Details:</label>
         <div id="workloadContainer">
           <div class="workload-item" data-index="0">
             <div class="workload-header">
@@ -275,7 +251,7 @@
                 </div>
                 <div class="field-group">
                   <label>Model:</label>
-                  <input type="text" class="workload-model" placeholder="Enter model" >
+                  <input type="text" class="workload-model" placeholder="Enter model">
                 </div>
                 <div class="field-group">
                   <label>Daily Workload:</label>
@@ -298,32 +274,42 @@
         <button type="button" id="addWorkloadBtn" class="add-workload-btn">+ Add Another Workload</button>
       </div>
 
-      <!-- 15) Workload Information -->
-      <div class="form-group contact-persons-section">
-       <label class="required">Contact Persons:</label>
-           <div id="contactPersonsContainer">
-          <div class="contact-person" data-index="0">
-            <div class="contact-header">
-              <h4>Contact Person <span class="contact-letter">A</span></h4>
-              <button type="button" class="remove-contact" style="display: none;">×</button>
-            </div>
-            <div class="contact-fields">
-              <div class="field-group">
-                <label>Name:</label>
-                <input type="text" class="contact-name" placeholder="Enter name" required>
+      <!-- Existing Contact Persons Section -->
+      <div class="form-group existing-contact-section">
+        <label>Existing Contact Persons:</label>
+        <div id="existingContactsContainer">
+          <!-- Existing contacts will be populated here dynamically -->
+        </div>
+      </div>
+
+      <!-- Manual Contact Persons Section -->
+      <div class="form-group manual-contact-section">
+        <label>Contact Persons:</label>
+        <div id="manualContactsContainer">
+          <div id="contactPersonsContainer">
+            <div class="contact-person" data-index="0">
+              <div class="contact-header">
+                <h4>Contact Person <span class="contact-letter">A</span></h4>
+                <button type="button" class="remove-contact" style="display: none;">×</button>
               </div>
-              <div class="field-group">
-                <label>Post:</label>
-                <input type="text" class="contact-post" placeholder="Enter designation" required>
-              </div>
-              <div class="field-group">
-                <label>Contact Number:</label>
-                <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+              <div class="contact-fields">
+                <div class="field-group">
+                  <label>Name:</label>
+                  <input type="text" class="contact-name" placeholder="Enter name">
+                </div>
+                <div class="field-group">
+                  <label>Post:</label>
+                  <input type="text" class="contact-post" placeholder="Enter designation">
+                </div>
+                <div class="field-group">
+                  <label>Contact Number:</label>
+                  <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+                </div>
               </div>
             </div>
           </div>
+          <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
         </div>
-        <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
       </div>
 
       <!-- 16) File Upload -->
