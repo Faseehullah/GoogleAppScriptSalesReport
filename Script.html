@@ -104,7 +104,9 @@
     if (forgotLink) {
       forgotLink.addEventListener('click', function(e) {
         e.preventDefault();
-        forgotPasswordModal.style.display = 'flex';
+        if (forgotPasswordModal) {
+          forgotPasswordModal.style.display = 'flex';
+        }
       });
     }
     if (resetButton) {
@@ -114,19 +116,28 @@
           showCustomError('Please enter your email or username.');
           return;
         }
-        document.getElementById('resetSpinner').style.display = 'inline-block';
+        const resetSpinner = document.getElementById('resetSpinner');
+        if (resetSpinner) {
+          resetSpinner.style.display = 'inline-block';
+        }
         google.script.run
           .withSuccessHandler(function(response) {
-            document.getElementById('resetSpinner').style.display = 'none';
+            if (resetSpinner) {
+              resetSpinner.style.display = 'none';
+            }
             if (response.success) {
               alert(response.message);
-              forgotPasswordModal.style.display = 'none';
+              if (forgotPasswordModal) {
+                forgotPasswordModal.style.display = 'none';
+              }
             } else {
               showCustomError(response.message);
             }
           })
           .withFailureHandler(function(error) {
-            document.getElementById('resetSpinner').style.display = 'none';
+            if (resetSpinner) {
+              resetSpinner.style.display = 'none';
+            }
             showCustomError('Error sending reset request.');
           })
           .forgotPassword(userInput);
@@ -134,7 +145,9 @@
     }
     if (cancelButton) {
       cancelButton.addEventListener('click', function() {
-        forgotPasswordModal.style.display = 'none';
+        if (forgotPasswordModal) {
+          forgotPasswordModal.style.display = 'none';
+        }
       });
     }
 
@@ -210,7 +223,10 @@
      LOGIN FUNCTIONALITY
      ===================================== */
   function login() {
-    document.getElementById('loginSpinner').style.display = 'inline-block';
+    const loginSpinner = document.getElementById('loginSpinner');
+    if (loginSpinner) {
+      loginSpinner.style.display = 'inline-block';
+    }
 
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -218,19 +234,32 @@
     // Basic Validation
     if (!username || !password) {
       showCustomError('Please enter both username and password.');
-      document.getElementById('loginSpinner').style.display = 'none';
+      if (loginSpinner) {
+        loginSpinner.style.display = 'none';
+      }
       return;
     }
 
     // Server-side checkLogin
     google.script.run
       .withSuccessHandler(function(response) {
-        document.getElementById('loginSpinner').style.display = 'none';
+        if (loginSpinner) {
+          loginSpinner.style.display = 'none';
+        }
         if (response.success) {
           // Hide login, show main form
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('mainForm').style.display = 'block';
-          document.getElementById('extractionLinkAfterLogin').style.display = 'block';
+          const loginForm = document.getElementById('loginForm');
+          const mainForm = document.getElementById('mainForm');
+          if (loginForm) {
+            loginForm.style.display = 'none';
+          }
+          if (mainForm) {
+            mainForm.style.display = 'block';
+          }
+          const extractionLinkAfterLogin = document.getElementById('extractionLinkAfterLogin');
+          if (extractionLinkAfterLogin) {
+            extractionLinkAfterLogin.style.display = 'block';
+          }
 
           // Hide extraction link before login
           const extractionLinkBeforeLogin = document.getElementById('extractionLinkBeforeLogin');
@@ -243,18 +272,24 @@
 
           // Show welcome container
           const welcomeContainer = document.getElementById('welcomeContainer');
-          welcomeContainer.style.display = 'block';
+          if (welcomeContainer) {
+            welcomeContainer.style.display = 'block';
+          }
 
           // Update welcome message
           const welcomeMsg = document.getElementById('welcomeMessage');
-          welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - For Sales Report Form`;
+          if (welcomeMsg) {
+            welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - For Sales Report Form`;
+          }
 
           // If there's an avatar
           if (response.avatarUrl) {
             const avatarImg = document.getElementById('salesPersonAvatar');
-            let cleanUrl = response.avatarUrl.trim();
-            avatarImg.src = cleanUrl;
-            avatarImg.style.display = 'inline';
+            if (avatarImg) {
+              let cleanUrl = response.avatarUrl.trim();
+              avatarImg.src = cleanUrl;
+              avatarImg.style.display = 'inline';
+            }
           }
 
           // Store user info globally
@@ -262,12 +297,17 @@
           window.sessionToken = response.token;
         } else {
           // Show invalid login error
-          document.getElementById('loginError').style.display = 'block';
+          const loginError = document.getElementById('loginError');
+          if (loginError) {
+            loginError.style.display = 'block';
+          }
         }
       })
       .withFailureHandler(function(error) {
         console.error("Error during login:", error);
-        document.getElementById('loginSpinner').style.display = 'none';
+        if (loginSpinner) {
+          loginSpinner.style.display = 'none';
+        }
         showCustomError('An unexpected error occurred. Please try again.');
       })
       .checkLogin(username, password);
@@ -280,6 +320,7 @@
     google.script.run
       .withSuccessHandler(function(contacts) {
         const existingContactsContainer = document.getElementById('existingContactsContainer');
+        if (!existingContactsContainer) return;
         existingContactsContainer.innerHTML = ''; // Clear old contents
 
         // Disable the Customer dropdown after selection
@@ -331,7 +372,7 @@
           const addSelectedBtn = document.createElement('button');
           addSelectedBtn.type = 'button';
           addSelectedBtn.id = 'addSelectedContactsBtn';
-          addSelectedBtn.classList.add('add-selected-contacts-btn');
+          addSelectedBtn.classList.add('btn', 'btn-secondary', 'add-button');
           addSelectedBtn.textContent = 'Add Selected Contacts';
           addSelectedBtn.addEventListener('click', addSelectedContacts);
           existingContactsContainer.appendChild(addSelectedBtn);
@@ -358,6 +399,7 @@
     }
 
     const manualContainer = document.getElementById('contactPersonsContainer'); 
+    if (!manualContainer) return;
     let addedCount = 0;
 
     checkboxes.forEach(cb => {
@@ -413,28 +455,30 @@
 
     // Reset the manual container to a single blank contact
     const contactPersonsContainer = document.getElementById('contactPersonsContainer');
-    contactPersonsContainer.innerHTML = `
-      <div class="contact-person" data-index="0">
-        <div class="contact-header">
-          <h4>Contact Person <span class="contact-letter">A</span></h4>
-          <button type="button" class="remove-contact" style="display: none;">×</button>
+    if (contactPersonsContainer) {
+      contactPersonsContainer.innerHTML = `
+        <div class="contact-person" data-index="0">
+          <div class="contact-header">
+            <h4>Contact Person <span class="contact-letter">A</span></h4>
+            <button type="button" class="remove-contact" style="display: none;">×</button>
+          </div>
+          <div class="contact-fields">
+            <div class="form-group">
+              <label>Name:</label>
+              <input type="text" class="contact-name" placeholder="Enter name">
+            </div>
+            <div class="form-group">
+              <label>Post:</label>
+              <input type="text" class="contact-post" placeholder="Enter designation">
+            </div>
+            <div class="form-group">
+              <label>Contact Number:</label>
+              <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+            </div>
+          </div>
         </div>
-        <div class="contact-fields">
-          <div class="field-group">
-            <label>Name:</label>
-            <input type="text" class="contact-name" placeholder="Enter name">
-          </div>
-          <div class="field-group">
-            <label>Post:</label>
-            <input type="text" class="contact-post" placeholder="Enter designation">
-          </div>
-          <div class="field-group">
-            <label>Contact Number:</label>
-            <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
-          </div>
-        </div>
-      </div>
-    `;
+      `;
+    }
   }
 
   /* =====================================
@@ -442,6 +486,7 @@
      ===================================== */
   function addContactPerson(existingData = null) {
     const container = document.getElementById('contactPersonsContainer');
+    if (!container) return;
     const contacts = container.getElementsByClassName('contact-person');
 
     // Limit to 26 letters
@@ -456,8 +501,10 @@
 
     // Update letter label
     template.setAttribute('data-index', newIndex);
-    template.querySelector('.contact-letter').textContent = 
-      String.fromCharCode(65 + newIndex);
+    const letterSpan = template.querySelector('.contact-letter');
+    if (letterSpan) {
+      letterSpan.textContent = String.fromCharCode(65 + newIndex);
+    }
 
     const nameInput = template.querySelector('.contact-name');
     const postInput = template.querySelector('.contact-post');
@@ -465,23 +512,21 @@
 
     if (existingData) {
       // Populate from existing data
-      nameInput.value = existingData.name;
-      postInput.value = existingData.post;
-      numberInput.value = existingData.number;
+      if (nameInput) nameInput.value = existingData.name;
+      if (postInput) postInput.value = existingData.post;
+      if (numberInput) numberInput.value = existingData.number;
     } else {
       // Otherwise clear
-      nameInput.value = '';
-      postInput.value = '';
-      numberInput.value = '';
+      if (nameInput) nameInput.value = '';
+      if (postInput) postInput.value = '';
+      if (numberInput) numberInput.value = '';
     }
-
-    template.querySelectorAll('input').forEach(inp => {
-      inp.classList.remove('error');
-    });
 
     // Show remove button
     const removeBtn = template.querySelector('.remove-contact');
-    removeBtn.style.display = 'block';
+    if (removeBtn) {
+      removeBtn.style.display = 'block';
+    }
 
     container.appendChild(template);
   }
@@ -502,7 +547,10 @@
     contacts.forEach((contact, index) => {
       contact.setAttribute('data-index', index);
       const letter = String.fromCharCode(65 + index);
-      contact.querySelector('.contact-letter').textContent = letter;
+      const letterSpan = contact.querySelector('.contact-letter');
+      if (letterSpan) {
+        letterSpan.textContent = letter;
+      }
     });
   }
 
@@ -516,22 +564,22 @@
       const numberInput = contact.querySelector('.contact-number');
 
       // Clear old errors
-      nameInput.classList.remove('error');
-      postInput.classList.remove('error');
-      numberInput.classList.remove('error');
+      if (nameInput) nameInput.classList.remove('error');
+      if (postInput) postInput.classList.remove('error');
+      if (numberInput) numberInput.classList.remove('error');
 
       // Check required fields
-      if (!nameInput.value.trim()) {
+      if (nameInput && !nameInput.value.trim()) {
         nameInput.classList.add('error');
         isValid = false;
       }
-      if (!postInput.value.trim()) {
+      if (postInput && !postInput.value.trim()) {
         postInput.classList.add('error');
         isValid = false;
       }
 
       // Phone format check if provided
-      if (numberInput.value.trim() && 
+      if (numberInput && numberInput.value.trim() && 
           !/^\+?\d{11,13}$/.test(numberInput.value.replace(/\s+/g, ''))) {
         numberInput.classList.add('error');
         isValid = false;
@@ -555,18 +603,24 @@
      ===================================== */
   function addWorkloadItem() {
     const container = document.getElementById('workloadContainer');
+    if (!container) return;
     const items = container.getElementsByClassName('workload-item');
     const template = items[0].cloneNode(true);
     const newIndex = items.length;
 
-    template.querySelector('.workload-letter').textContent = String.fromCharCode(65 + newIndex);
+    const letterSpan = template.querySelector('.workload-letter');
+    if (letterSpan) {
+      letterSpan.textContent = String.fromCharCode(65 + newIndex);
+    }
 
     template.querySelectorAll('input').forEach(input => {
       input.value = '';
     });
 
     const removeBtn = template.querySelector('.remove-workload');
-    removeBtn.style.display = 'block';
+    if (removeBtn) {
+      removeBtn.style.display = 'block';
+    }
 
     container.appendChild(template);
   }
@@ -582,7 +636,10 @@
   function updateWorkloadIndices() {
     const items = document.querySelectorAll('.workload-item');
     items.forEach((item, index) => {
-      item.querySelector('.workload-letter').textContent = String.fromCharCode(65 + index);
+      const letterSpan = item.querySelector('.workload-letter');
+      if (letterSpan) {
+        letterSpan.textContent = String.fromCharCode(65 + index);
+      }
     });
   }
 
@@ -640,7 +697,10 @@
           .withSuccessHandler(function(data) {
             populateDropdown(dd, data);
             showLoadingDots(`${dd.toLowerCase()}Loading`, false);
-            document.getElementById('Region').addEventListener('change', filterCityByRegion);
+            const regionSelect = document.getElementById('Region');
+            if (regionSelect) {
+              regionSelect.addEventListener('change', filterCityByRegion);
+            }
           })
           .withFailureHandler(function(error) {
             console.error(`Failed to populate ${dd}:`, error);
@@ -653,7 +713,10 @@
           .withSuccessHandler(function(data) {
             populateDropdown(dd, data);
             showLoadingDots(`${dd.toLowerCase()}Loading`, false);
-            document.getElementById('Product').addEventListener('change', filterAnalyzerByProduct);
+            const productSelect = document.getElementById('Product');
+            if (productSelect) {
+              productSelect.addEventListener('change', filterAnalyzerByProduct);
+            }
           })
           .withFailureHandler(function(error) {
             console.error(`Failed to populate ${dd}:`, error);
@@ -679,12 +742,18 @@
     });
 
     // Initialize dependent dropdowns as disabled
-    document.getElementById('City').disabled = true;
-    document.getElementById('Customer').disabled = true;
-    document.getElementById('AnalyzerModel').disabled = true;
-    document.getElementById('Flags').disabled = true;
-    document.getElementById('Category').value = '';
-    document.getElementById('Category').disabled = true;
+    const dependentDropdowns = ['City', 'Customer', 'AnalyzerModel', 'Flags'];
+    dependentDropdowns.forEach(dd => {
+      const select = document.getElementById(dd);
+      if (select) {
+        select.disabled = true;
+      }
+    });
+    const categoryInput = document.getElementById('Category');
+    if (categoryInput) {
+      categoryInput.value = '';
+      categoryInput.disabled = true;
+    }
   }
 
   function populateDropdown(id, data) {
@@ -724,7 +793,7 @@
           citySelect.disabled = false;
           showLoadingDots('cityLoading', false);
           // Add change listener for City
-          document.getElementById('City').addEventListener('change', filterCustomersByCity);
+          citySelect.addEventListener('change', filterCustomersByCity);
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load cities:', error);
@@ -750,7 +819,7 @@
           customerSelect.disabled = false;
           showLoadingDots('customerLoading', false);
           // Add change listener for Customer
-          document.getElementById('Customer').addEventListener('change', function(e) {
+          customerSelect.addEventListener('change', function(e) {
             resetContactsSection();
 
             if (e.target.value) {
@@ -787,8 +856,12 @@
     clearDropdown('Flags');
     categoryInput.value = '';
 
-    flagsSelect.disabled = true;
-    categoryInput.disabled = true;
+    if (flagsSelect) {
+      flagsSelect.disabled = true;
+    }
+    if (categoryInput) {
+      categoryInput.disabled = true;
+    }
 
     if (product) {
       showLoadingDots('analyzerLoading', true);
@@ -814,7 +887,9 @@
         })
         .getAnalyzersByProduct(product);
     } else {
-      analyzerSelect.disabled = true;
+      if (analyzerSelect) {
+        analyzerSelect.disabled = true;
+      }
       showLoadingDots('analyzerLoading', false);
     }
   }
@@ -822,13 +897,18 @@
   function filterFlagsByAnalyzerModel() {
     const product = document.getElementById('Product').value;
     const analyzerModel = document.getElementById('AnalyzerModel').value;
-    const flagsSelect = document.getElementById('Flags'); // Defined here
+    const flagsSelect = document.getElementById('Flags');
     const categoryInput = document.getElementById('Category');
 
     // Reset Flags and Category
     clearDropdown('Flags');
     categoryInput.value = '';
-    categoryInput.disabled = true;
+    if (flagsSelect) {
+      flagsSelect.disabled = true;
+    }
+    if (categoryInput) {
+      categoryInput.disabled = true;
+    }
 
     if (product && analyzerModel) {
       showLoadingDots('flagsLoading', true);
@@ -839,11 +919,15 @@
             showCustomError('No Flags found for the selected Analyzer Model.');
           }
           populateDropdown('Flags', flags);
-          flagsSelect.disabled = false; // Now correctly defined
+          if (flagsSelect) {
+            flagsSelect.disabled = false;
+          }
           showLoadingDots('flagsLoading', false);
 
           // Attach change listener to Flags dropdown
-          flagsSelect.addEventListener('change', filterCategoryByFlag);
+          if (flagsSelect) {
+            flagsSelect.addEventListener('change', filterCategoryByFlag);
+          }
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load flags:', error);
@@ -852,7 +936,9 @@
         })
         .getFlagsByProductAndAnalyzer(product, analyzerModel);
     } else {
-      flagsSelect.disabled = true; // Now correctly defined
+      if (flagsSelect) {
+        flagsSelect.disabled = true;
+      }
       showLoadingDots('flagsLoading', false);
     }
   }
@@ -870,8 +956,10 @@
 
     // If product, analyzerModel, or flag is missing, clear Category
     if (!product || !analyzerModel || !flag) {
-      categoryInput.value = '';
-      categoryInput.disabled = true;
+      if (categoryInput) {
+        categoryInput.value = '';
+        categoryInput.disabled = true;
+      }
       return;
     }
 
@@ -881,20 +969,26 @@
         console.log('Category received:', categoryValue); // Debugging line
         // If no category found, set the input to indicate so
         if (!categoryValue) {
-          categoryInput.value = 'No Category Found';
-          categoryInput.disabled = true;
+          if (categoryInput) {
+            categoryInput.value = 'No Category Found';
+            categoryInput.disabled = true;
+          }
           return;
         }
 
         // Otherwise, set the Category
-        categoryInput.value = categoryValue;
-        categoryInput.disabled = true; // Remain disabled
+        if (categoryInput) {
+          categoryInput.value = categoryValue;
+          categoryInput.disabled = true; // Remain disabled
+        }
       })
       .withFailureHandler(function(error) {
         console.error('Failed to fetch category:', error);
         showCustomError('Failed to fetch category. Please try again.');
-        categoryInput.value = 'Error';
-        categoryInput.disabled = true;
+        if (categoryInput) {
+          categoryInput.value = 'Error';
+          categoryInput.disabled = true;
+        }
       })
       .getCategoryByProductAnalyzerFlag(product, analyzerModel, flag); 
   }
@@ -925,7 +1019,10 @@
      ===================================== */
   document.getElementById('dataForm').onsubmit = function(e) {
     e.preventDefault();
-    document.getElementById('submitSpinner').style.display = 'inline-block';
+    const submitSpinner = document.getElementById('submitSpinner');
+    if (submitSpinner) {
+      submitSpinner.style.display = 'inline-block';
+    }
 
     // Required fields
     const requiredFields = [
@@ -958,7 +1055,9 @@
     }
 
     if (!isValid) {
-      document.getElementById('submitSpinner').style.display = 'none';
+      if (submitSpinner) {
+        submitSpinner.style.display = 'none';
+      }
       if (firstInvalid) firstInvalid.focus();
       return;
     }
@@ -1016,13 +1115,17 @@
 
       google.script.run
         .withSuccessHandler(function(response) {
-          document.getElementById('submitSpinner').style.display = 'none';
+          if (submitSpinner) {
+            submitSpinner.style.display = 'none';
+          }
           showConfirmationMessage(response);
           showCustomModal();
         })
         .withFailureHandler(function(error) {
           console.error('Error submitting form:', error);
-          document.getElementById('submitSpinner').style.display = 'none';
+          if (submitSpinner) {
+            submitSpinner.style.display = 'none';
+          }
           showCustomError('Failed to submit the form. Please try again.');
         })
         .processForm(formObject, window.currentUser, window.sessionToken);
@@ -1043,19 +1146,51 @@
    * Resets the form to a fresh state
    */
   function resetForm() {
-    document.getElementById('dataForm').reset();
-    document.getElementById('newCustomerField').style.display = 'none';
+    const dataForm = document.getElementById('dataForm');
+    if (dataForm) {
+      dataForm.reset();
+    }
+    const newCustomerField = document.getElementById('newCustomerField');
+    if (newCustomerField) {
+      newCustomerField.style.display = 'none';
+    }
 
     // Reset manual container to one blank contact
-    const manualContainer = document.getElementById('contactPersonsContainer');
-    const contacts = manualContainer.querySelectorAll('.contact-person');
-    while (contacts.length > 1) {
-      contacts[contacts.length - 1].remove();
+    const contactPersonsContainer = document.getElementById('contactPersonsContainer');
+    if (contactPersonsContainer) {
+      contactPersonsContainer.innerHTML = `
+        <div class="contact-person" data-index="0">
+          <div class="contact-header">
+            <h4>Contact Person <span class="contact-letter">A</span></h4>
+            <button type="button" class="remove-contact" style="display: none;">×</button>
+          </div>
+          <div class="contact-fields">
+            <div class="form-group">
+              <label>Name:</label>
+              <input type="text" class="contact-name" placeholder="Enter name">
+            </div>
+            <div class="form-group">
+              <label>Post:</label>
+              <input type="text" class="contact-post" placeholder="Enter designation">
+            </div>
+            <div class="form-group">
+              <label>Contact Number:</label>
+              <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+            </div>
+          </div>
+        </div>
+      `;
     }
-    contacts[0].querySelectorAll('input').forEach(input => {
-      input.value = '';
-      input.classList.remove('error');
-    });
+
+    // Remove additional contacts
+    const contacts = document.querySelectorAll('.contact-person');
+    if (contacts.length > 1) {
+      for (let i = contacts.length - 1; i > 0; i--) {
+        contacts[i].remove();
+      }
+    }
+
+    // Remove image preview
     removeImage();
 
     // Clear existing contacts
@@ -1083,35 +1218,48 @@
      MODALS & CONFIRMATIONS
      ===================================== */
   function showCustomError(msg) {
-    document.getElementById('errorMessage').textContent = msg;
-    document.getElementById('errorModal').style.display = 'flex';
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    if (errorMessage) {
+      errorMessage.textContent = msg;
+    }
+    if (errorModal) {
+      errorModal.style.display = 'flex';
+    }
   }
 
   function closeErrorModal() {
-    document.getElementById('errorModal').style.display = 'none';
+    const errorModal = document.getElementById('errorModal');
+    if (errorModal) {
+      errorModal.style.display = 'none';
+    }
   }
 
   function showConfirmationMessage(msg) {
     const cm = document.getElementById('confirmationMessage');
-    cm.textContent = msg;
-    cm.classList.add('show');
-    setTimeout(function() {
-      cm.classList.add('hide');
-      setTimeout(function(){
-        cm.classList.remove('show','hide');
-      }, 500);
-    }, 3000);
+    if (cm) {
+      cm.textContent = msg;
+      cm.style.display = 'block';
+      setTimeout(function() {
+        cm.style.display = 'none';
+      }, 4000);
+    }
   }
 
   function showCustomModal() {
     const cModal = document.getElementById('customModal');
-    if (cModal) cModal.style.display = 'flex';
+    if (cModal) {
+      cModal.style.display = 'flex';
+    }
   }
 
   function handleModalResponse(addMore) {
     if (addMore) {
       resetForm();
-      document.getElementById('newCustomerField').style.display = 'none';
+      const newCustomerField = document.getElementById('newCustomerField');
+      if (newCustomerField) {
+        newCustomerField.style.display = 'none';
+      }
       document.querySelectorAll('.error').forEach(element => element.classList.remove('error'));
       document.querySelectorAll('[style*="border"]').forEach(element => {
         element.style.border = '';
@@ -1119,7 +1267,10 @@
     } else {
       window.location.reload();
     }
-    document.getElementById('customModal').style.display = 'none';
+    const customModal = document.getElementById('customModal');
+    if (customModal) {
+      customModal.style.display = 'none';
+    }
   }
 
   /* =====================================
@@ -1144,8 +1295,12 @@
       }
       const reader = new FileReader();
       reader.onload = function(e) {
-        previewTag.src = e.target.result;
-        previewDiv.style.display = 'block';
+        if (previewTag) {
+          previewTag.src = e.target.result;
+        }
+        if (previewDiv) {
+          previewDiv.style.display = 'block';
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -1155,9 +1310,15 @@
     const fileInput = document.getElementById('imageUpload');
     const previewTag = document.getElementById('previewImageTag');
     const previewDiv = document.getElementById('imagePreview');
-    fileInput.value = '';
-    previewTag.src = '';
-    previewDiv.style.display = 'none';
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    if (previewTag) {
+      previewTag.src = '';
+    }
+    if (previewDiv) {
+      previewDiv.style.display = 'none';
+    }
   }
 
   /* =====================================
@@ -1168,7 +1329,10 @@
     if (form) {
       form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
       if (form.style.display === 'block') {
-        document.getElementById('addCustRegionSelect').focus();
+        const regionSelect = document.getElementById('addCustRegionSelect');
+        if (regionSelect) {
+          regionSelect.focus();
+        }
       }
     }
   }
@@ -1243,16 +1407,20 @@
     setInterval(updateTimestamp, 1000);
 
     const dateOfVisit = document.getElementById('dateOfVisit');
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    dateOfVisit.max = formatDate(today);
-    dateOfVisit.min = formatDate(thirtyDaysAgo);
+    if (dateOfVisit) {
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      dateOfVisit.max = formatDate(today);
+      dateOfVisit.min = formatDate(thirtyDaysAgo);
+    }
 
     const nextVisit = document.getElementById('nextVisit');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    nextVisit.min = formatDate(tomorrow);
+    if (nextVisit) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      nextVisit.min = formatDate(tomorrow);
+    }
 
     // Ensure Category is disabled on load
     const categoryInput = document.getElementById('Category');
@@ -1267,7 +1435,10 @@
       weekday: 'long', year: 'numeric', month: 'long',
       day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
-    document.getElementById('timestamp').textContent = 'Current Date & Time: ' + formatted;
+    const timestamp = document.getElementById('timestamp');
+    if (timestamp) {
+      timestamp.textContent = 'Current Date & Time: ' + formatted;
+    }
   }
 
   function formatDate(date) {
@@ -1287,8 +1458,10 @@
       return;
     }
     const exportBtn = document.getElementById('exportDataButton');
-    exportBtn.disabled = true;
-    exportBtn.textContent = 'Exporting...';
+    if (exportBtn) {
+      exportBtn.disabled = true;
+      exportBtn.textContent = 'Exporting...';
+    }
 
     google.script.run
       .withSuccessHandler(function(downloadUrl) {
@@ -1298,14 +1471,18 @@
         } else {
           showCustomError('No data available for export.');
         }
-        exportBtn.disabled = false;
-        exportBtn.textContent = 'Export My Sales Data';
+        if (exportBtn) {
+          exportBtn.disabled = false;
+          exportBtn.textContent = 'Export My Sales Data';
+        }
       })
       .withFailureHandler(function(error) {
         console.error("Export Error:", error);
         showCustomError('Failed to export data. Please try again.');
-        exportBtn.disabled = false;
-        exportBtn.textContent = 'Export My Sales Data';
+        if (exportBtn) {
+          exportBtn.disabled = false;
+          exportBtn.textContent = 'Export My Sales Data';
+        }
       })
       .exportSalesPersonDataAsCSV(window.currentUser, window.sessionToken);
   }

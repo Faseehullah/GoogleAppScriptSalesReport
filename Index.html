@@ -1,45 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nextek Healthcare - Sales Report Form</title>
+  <!-- Include Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Include the external Style.html for CSS -->
   <?!= include('Style'); ?>
 </head>
 <body>
   <!-- =====================================
-       Custom Modal for Post-Submission Actions
-       ===================================== -->
-  <div id="customModal">
-    <div id="customModalContent">
-      <p>Data successfully submitted. Do you want to add new logs?</p>
-      <!-- Buttons to handle user response -->
-      <button id="yesAddMoreBtn">Yes</button>
-      <button id="noAddMoreBtn">No</button>
-    </div>
-  </div>
-
-  <!-- =====================================
        Header Section
        ===================================== -->
-  <div class="header">
+  <header>
     <img src="https://nextekhealthcare.com/wp-content/uploads/2024/07/Logo-Red-Black-Png-1.png" alt="Company Logo">
     <h1>Nextek Healthcare - Sales Report Form</h1>
     <div class="timestamp" id="timestamp">CURRENT DATE & TIME</div>
-  </div>
+  </header>
 
   <!-- =====================================
        Welcome Container (Displayed After Login)
        ===================================== -->
-  <div id="welcomeContainer" style="display:none;">
-    <p id="welcomeMessage"></p>
-    <img id="salesPersonAvatar" class="avatar" src="" alt="Avatar">
-  </div>
-  
-  <!-- =====================================
-       Extraction Link Before Login
-       ===================================== -->
-  <div id="extractionLinkBeforeLogin" style="text-align: center; margin-top: 80px;">
-    <a href="?page=extraction" target="_blank">Sales Data Extraction</a>
+  <div id="welcomeContainer">
+    <p id="welcomeMessage">Welcome, [Username]!</p>
+    <!-- Replaced via.placeholder.com with a more reliable placeholder service -->
+    <img id="salesPersonAvatar" class="avatar" src="https://placehold.co/70x70" alt="Sales Person Avatar">
   </div>
 
   <!-- =====================================
@@ -47,18 +33,11 @@
        ===================================== -->
   <div class="login-container" id="loginForm">
     <h2>Login</h2>
-    <!-- Username Input -->
-    <input type="text" id="username" placeholder="Username" aria-label="Username">
-    <!-- Password Input -->
-    <input type="password" id="password" placeholder="Password" aria-label="Password">
-    <!-- Login Button -->
-    <button id="loginButton">Login</button>
-    <!-- Spinner to indicate login processing -->
+    <input type="text" id="username" placeholder="Username" aria-label="Username" required>
+    <input type="password" id="password" placeholder="Password" aria-label="Password" required>
+    <button id="loginButton" class="btn btn-primary">Login</button>
     <div class="spinner" id="loginSpinner"></div>
-    <!-- Error Message (Hidden by Default) -->
     <p class="login-error" id="loginError">Invalid username or password</p>
-
-    <!-- Forgot Password Link -->
     <p style="text-align:center;">
       <a href="#" id="forgotPasswordLink">Forgot Password?</a>
     </p>
@@ -67,43 +46,33 @@
   <!-- =====================================
        Forgot Password Modal
        ===================================== -->
-  <div id="forgotPasswordModal" style="display:none;">
-    <div id="forgotPasswordContent">
+  <div id="forgotPasswordModal" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
       <h3>Reset Password</h3>
-      <input type="text" id="resetEmailOrUsername" placeholder="Enter your email or username">
-      <button id="resetPasswordButton">Send Reset</button>
-      <button id="cancelResetButton">Cancel</button>
+      <input type="text" id="resetEmailOrUsername" placeholder="Enter your email or username" aria-label="Email or Username" required>
+      <button id="resetPasswordButton" class="btn btn-secondary">Send Reset</button>
+      <button id="cancelResetButton" class="btn btn-danger">Cancel</button>
       <div class="spinner" id="resetSpinner"></div>
     </div>
   </div>
 
   <!-- =====================================
-       Extraction Links After Login
-       ===================================== -->
-  <div id="extractionLinkAfterLogin" style="text-align: center; margin-top: 20px; display: none;">
-    <a href="?page=extraction" target="_blank">Download Visit Record</a>
-    |
-    <a href="?page=extractionreport" target="_blank">View Extraction Report</a>
-  </div>
-
-  <!-- =====================================
        Main Form Container (Visible After Login)
        ===================================== -->
-  <div class="main-form-container" id="mainForm">
-
+  <main id="mainForm">
     <!-- Add Customer Manually Button -->
-    <button id="addCustomerButton">Add New Customer (Manual)</button>
+    <button id="addCustomerButton" class="btn btn-secondary">Add New Customer (Manual)</button>
 
     <!-- =====================================
          Add Customer Manual Form (Hidden by Default)
          ===================================== -->
-    <form id="addCustomerManualForm" style="display:none;">
+    <form id="addCustomerManualForm" style="display:none; margin-top: 20px;">
       <h3>Add New Customer</h3>
-      
+
       <!-- Region Selection -->
       <div class="form-group">
         <label for="addCustRegionSelect" class="required">Region:</label>
-        <select id="addCustRegionSelect" required>
+        <select id="addCustRegionSelect" required aria-required="true">
           <option value="">Select Region</option>
           <option value="SOUTH">SOUTH</option>
           <option value="NORTH">NORTH</option>
@@ -111,27 +80,27 @@
           <option value="CENTRAL">CENTRAL</option>
         </select>
       </div>
-      
+
       <!-- City Input -->
       <div class="form-group">
         <label for="addCustCityInput" class="required">City:</label>
-        <input type="text" id="addCustCityInput" placeholder="Enter city" required>
+        <input type="text" id="addCustCityInput" placeholder="Enter city" required aria-required="true">
       </div>
-      
+
       <!-- Customer Name Input -->
       <div class="form-group">
         <label for="addCustNameInput" class="required">Customer Name:</label>
-        <input type="text" id="addCustNameInput" placeholder="Enter customer name" required>
+        <input type="text" id="addCustNameInput" placeholder="Enter customer name" required aria-required="true">
       </div>
-      
-      <!-- Save New Customer Button -->
-      <div class="form-group button-group">
-        <button type="button" id="saveNewCustomerButton" class="primary-btn">Save Customer</button>
-        <button type="button" id="cancelAddCustomerButton" class="secondary-btn">Cancel</button>
+
+      <!-- Save and Cancel Buttons -->
+      <div class="form-actions">
+        <button type="button" id="saveNewCustomerButton" class="btn btn-secondary">Save Customer</button>
+        <button type="button" id="cancelAddCustomerButton" class="btn btn-danger">Cancel</button>
       </div>
     </form>
 
-    <h2 style="margin-top: 20px;">Submit Sales Log</h2>
+    <h2>Submit Sales Log</h2>
 
     <form id="dataForm">
       <!-- 1) Date of Visit -->
@@ -146,7 +115,7 @@
         <select id="visitType" required aria-required="true">
           <option value="">Select</option>
           <option value="NEW SALES CALL">NEW SALES CALL</option>
-          <option value="TECHNICAL BREIFING">TECHNICAL BREIFING</option>
+          <option value="TECHNICAL BRIEFING">TECHNICAL BRIEFING</option>
           <option value="FOLLOW UP">FOLLOW UP</option>
           <option value="PAYMENT ISSUE">PAYMENT ISSUE</option>
         </select>
@@ -155,15 +124,20 @@
       <!-- 3) Region -->
       <div class="form-group">
         <label for="Region" class="required">Region:</label>
-        <select id="Region" required aria-required="true"></select>
+        <select id="Region" required aria-required="true">
+          <!-- Options will be populated dynamically -->
+        </select>
+        <span class="loading-dots" id="regionLoading" style="display:none;"></span>
       </div>
 
       <!-- 4) City -->
       <div class="form-group">
         <label for="City" class="required">City:</label>
         <div class="input-container">
-          <select id="City" disabled required aria-required="true"></select>
-          <span class="loading-dots" id="cityLoading"></span>
+          <select id="City" disabled required aria-required="true">
+            <!-- Options will be populated dynamically -->
+          </select>
+          <span class="loading-dots" id="cityLoading" style="display:none;"></span>
         </div>
       </div>
 
@@ -171,34 +145,44 @@
       <div class="form-group">
         <label for="Customer" class="required">Customer Name:</label>
         <div class="input-container">
-          <select id="Customer" disabled required aria-required="true"></select>
-          <span class="loading-dots" id="customerLoading"></span>
+          <select id="Customer" disabled required aria-required="true">
+            <!-- Options will be populated dynamically -->
+          </select>
+          <span class="loading-dots" id="customerLoading" style="display:none;"></span>
         </div>
       </div>
 
       <!-- If 'Add New Customer' is selected, show newCustomerField -->
       <div class="form-group" id="newCustomerField" style="display:none;">
         <label for="newCustomer">New Customer Name:</label>
-        <input type="text" id="newCustomer" placeholder="Enter new customer name">
+        <input type="text" id="newCustomer" placeholder="Enter new customer name" aria-label="New Customer Name">
       </div>
 
       <!-- 6) Department -->
       <div class="form-group">
         <label for="Department" class="required">Department:</label>
-        <select id="Department" required aria-required="true"></select>
+        <select id="Department" required aria-required="true">
+          <!-- Options will be populated dynamically -->
+        </select>
+        <span class="loading-dots" id="departmentLoading" style="display:none;"></span>
       </div>
 
       <!-- 8) Product -->
       <div class="form-group">
         <label for="Product" class="required">Product:</label>
-        <select id="Product" required aria-required="true"></select>
+        <select id="Product" required aria-required="true">
+          <!-- Options will be populated dynamically -->
+        </select>
+        <span class="loading-dots" id="productLoading" style="display:none;"></span>
       </div>
 
       <!-- 9) Analyzer Model -->
       <div class="form-group">
         <label for="AnalyzerModel" class="required">Analyzer Model:</label>
         <div class="input-container">
-          <select id="AnalyzerModel" disabled required aria-required="true"></select>
+          <select id="AnalyzerModel" disabled required aria-required="true">
+            <!-- Options will be populated dynamically -->
+          </select>
           <span class="loading-dots" id="analyzerLoading" style="display:none;"></span>
         </div>
       </div>
@@ -206,24 +190,22 @@
       <!-- 10) Flags -->
       <div class="form-group">
         <label for="Flags" class="required">Flags:</label>
-        <select id="Flags" required aria-required="true"></select>
+        <select id="Flags" required aria-required="true">
+          <!-- Options will be populated dynamically -->
+        </select>
+        <span class="loading-dots" id="flagsLoading" style="display:none;"></span>
       </div>
 
       <!-- 11) Category -->
       <div class="form-group">
         <label for="Category" class="required">Category:</label>
-         <input type="text" id="Category" disabled required aria-required="true" readonly />
+        <input type="text" id="Category" disabled required aria-required="true" readonly>
       </div>
 
       <!-- 12) Visit Details -->
       <div class="form-group">
         <label for="VISIT_DESCRIPTION" class="required">Visit Details:</label>
-        <textarea 
-          id="VISIT_DESCRIPTION"
-          name="visitDescription"
-          required aria-required="true"
-          placeholder="Enter visit details"
-        ></textarea>
+        <textarea id="VISIT_DESCRIPTION" name="visitDescription" required aria-required="true" placeholder="Enter visit details"></textarea>
       </div>
 
       <!-- 13) Next Visit Date -->
@@ -233,114 +215,128 @@
       </div>
 
       <!-- 14) Workload Information -->
-      <div class="form-group workload-section">
-        <label>Workload Details:</label>
+      <section class="form-group workload-section">
+        <div class="section-header">
+          <h3>Workload Details:</h3>
+          <button type="button" id="addWorkloadBtn" class="add-button">+ Add Another Workload</button>
+        </div>
         <div id="workloadContainer">
-          <div class="workload-item" data-index="0">
+          <div class="item workload-item" data-index="0">
             <div class="workload-header">
               <h4>Workload <span class="workload-letter">A</span></h4>
-              <button type="button" class="remove-workload" style="display: none;">&times;</button>
+              <button type="button" class="remove-workload btn btn-danger" style="display: none;">×</button>
             </div>
             <div class="workload-fields">
-              <div class="row">
-                <div class="field-group">
-                  <label>Competitor:</label>
-                  <input type="text" class="workload-competitor" placeholder="Enter competitor name">
+              <div class="form-group">
+                <label>Competitor:</label>
+                <input type="text" class="workload-competitor" placeholder="Enter competitor name">
+              </div>
+              <div class="form-group">
+                <label>Model:</label>
+                <input type="text" class="workload-model" placeholder="Enter model">
+              </div>
+              <div class="form-group">
+                <label>Daily Workload:</label>
+                <div class="input-group">
+                  <input type="number" class="workload-daily" placeholder="Enter value" min="0">
+                  <span class="input-group-text">Samples/day</span>
                 </div>
-                <div class="field-group">
-                  <label>Model:</label>
-                  <input type="text" class="workload-model" placeholder="Enter model">
-                </div>
-                <div class="field-group">
-                  <label>Daily Workload:</label>
-                  <div class="input-group">
-                    <input type="number" class="workload-daily" placeholder="Enter value" min="0">
-                    <span class="input-group-text">Samples/day</span>
-                  </div>
-                </div>
-                <div class="field-group">
-                  <label>Test Cost:</label>
-                  <div class="input-group">
-                    <span class="input-group-text">PKR</span>
-                    <input type="number" class="workload-cost" placeholder="Enter amount" min="0" step="0.01">
-                  </div>
+              </div>
+              <div class="form-group">
+                <label>Test Cost:</label>
+                <div class="input-group">
+                  <span class="input-group-text">PKR</span>
+                  <input type="number" class="workload-cost" placeholder="Enter amount" min="0" step="0.01">
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <button type="button" id="addWorkloadBtn" class="add-workload-btn">+ Add Another Workload</button>
-      </div>
+      </section>
 
       <!-- Existing Contact Persons Section -->
-      <div class="form-group existing-contact-section">
-        <label>Existing Contact Persons:</label>
-        <!-- Toggle Button -->
-        <button type="button" id="toggleExistingContactsBtn">Hide Existing Contacts</button>
-        <!-- Collapsible Container -->
+      <section class="form-group contact-section">
+        <div class="section-header">
+          <h3>Existing Contact Persons:</h3>
+          <button type="button" id="toggleExistingContactsBtn" class="btn btn-secondary">Hide Existing Contacts</button>
+        </div>
         <div id="existingContactsCollapsible" class="collapsible expanded">
           <div id="existingContactsContainer">
-            <!-- Existing contacts will be populated here dynamically -->
+            <!-- Existing contacts will be populated dynamically -->
           </div>
+          <button type="button" id="addSelectedContactsBtn" class="btn btn-secondary add-button" style="display:none;">Add Selected Contacts</button>
+          <p class="no-contacts-message" style="display:none;">No existing contacts available.</p>
         </div>
-      </div>
+      </section>
 
       <!-- Manual Contact Persons Section -->
-      <div class="form-group manual-contact-section">
-        <label>Contact Persons:</label>
-        <div id="manualContactsContainer">
-          <div id="contactPersonsContainer">
-            <div class="contact-person" data-index="0">
-              <div class="contact-header">
-                <h4>Contact Person <span class="contact-letter">A</span></h4>
-                <button type="button" class="remove-contact" style="display: none;">×</button>
+      <section class="form-group contact-section">
+        <div class="section-header">
+          <h3>Contact Persons:</h3>
+          <button type="button" id="addContactPersonBtn" class="add-button">+ Add Another Contact Person</button>
+        </div>
+        <div id="contactPersonsContainer">
+          <div class="item contact-person" data-index="0">
+            <div class="contact-header">
+              <h4>Contact Person <span class="contact-letter">A</span></h4>
+              <button type="button" class="remove-contact btn btn-danger" style="display: none;">×</button>
+            </div>
+            <div class="contact-fields">
+              <div class="form-group">
+                <label>Name:</label>
+                <input type="text" class="contact-name" placeholder="Enter name" required aria-required="true">
               </div>
-              <div class="contact-fields">
-                <div class="field-group">
-                  <label>Name:</label>
-                  <input type="text" class="contact-name" placeholder="Enter name">
-                </div>
-                <div class="field-group">
-                  <label>Post:</label>
-                  <input type="text" class="contact-post" placeholder="Enter designation">
-                </div>
-                <div class="field-group">
-                  <label>Contact Number:</label>
-                  <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
-                </div>
+              <div class="form-group">
+                <label>Post:</label>
+                <input type="text" class="contact-post" placeholder="Enter designation" required aria-required="true">
+              </div>
+              <div class="form-group">
+                <label>Contact Number:</label>
+                <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
               </div>
             </div>
           </div>
-          <button type="button" id="addContactPersonBtn" class="add-contact-btn">+ Add Another Contact Person</button>
         </div>
-      </div>
+      </section>
 
       <!-- 16) File Upload -->
       <div class="form-group">
         <label for="imageUpload">Upload Image (optional):</label>
-        <input type="file" id="imageUpload" accept="image/*" capture="camera">
+        <input type="file" id="imageUpload" accept="image/*" capture="camera" aria-label="Upload Image">
       </div>
 
       <!-- Image Preview and Remove Button -->
       <div class="form-group image-preview" id="imagePreview" style="display:none;">
         <img id="previewImageTag" src="" alt="Image Preview">
-        <button type="button" id="removeImageButton">Remove Image</button>
+        <button type="button" id="removeImageButton" class="btn btn-danger">Remove Image</button>
       </div>
 
       <!-- Submit Button and Spinner -->
       <div class="form-group">
-        <button type="submit">SUBMIT</button>
-        <div class="spinner" id="submitSpinner"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">SUBMIT</button>
+          <div class="spinner" id="submitSpinner"></div>
+        </div>
       </div>
     </form>
 
     <!-- =====================================
+         Add Customer Manual Form Success Modal
+         ===================================== -->
+    <div id="addCustomerSuccessModal" class="modal" aria-modal="true" role="dialog">
+      <div class="modal-content">
+        <p>Customer successfully added!</p>
+        <button id="closeAddCustomerModalBtn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+
+    <!-- =====================================
          Error Modal
          ===================================== -->
-    <div id="errorModal">
-      <div id="errorModalContent">
-        <p id="errorMessage"></p>
-        <button id="closeErrorModalBtn">Close</button>
+    <div id="errorModal" class="modal" aria-modal="true" role="alertdialog">
+      <div class="modal-content">
+        <p id="errorMessage">An error occurred. Please try again.</p>
+        <button id="closeErrorModalBtn" class="btn btn-danger">Close</button>
       </div>
     </div>
 
@@ -348,7 +344,7 @@
          Confirmation Message
          ===================================== -->
     <div class="confirmation-message" id="confirmationMessage">Data successfully submitted!</div>
-  </div>
+  </main>
 
   <!-- =====================================
        Footer Section
