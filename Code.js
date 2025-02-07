@@ -12,7 +12,7 @@ const Config = {
       // One row per contact (ID, ADDED BY, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT, TIME STAMP)
       CONTACTS: "CONTACTS!A2:G",
       // One row per new workload (ID, ADDED BY, CUSTOMER, Competitor, Competitor Model, Daily Work Load, Estimated Per Test Cost, TIME STAMP)
-      WORKLOAD: "WORKLOAD!A2:G",
+      WORKLOAD: "WORKLOAD!A2:H",
       // Dropdown Ranges (updated to FLAGS sheet)
       PRODUCT: "FLAGS!A2:A350",
       ANALYZER_MODEL: "FLAGS!B2:B350",
@@ -510,7 +510,7 @@ function getCategoryByProductAnalyzerFlag(product, analyzerModel, flag) {
 /**************************
  * WORKLOAD MANAGEMENT
  **************************/
-function createMultipleWorkloadRecords(id, customer, workloads) {
+function createMultipleWorkloadRecords(id, customer, workloads,username) {
   try {
     if (!Array.isArray(workloads) || workloads.length === 0) return;
 
@@ -519,6 +519,7 @@ function createMultipleWorkloadRecords(id, customer, workloads) {
 
     const rows = workloads.map(wl => [
       id,
+      username,
       customer || "",
       wl.competitor || "",
       wl.competitorModel || "",
@@ -527,7 +528,7 @@ function createMultipleWorkloadRecords(id, customer, workloads) {
       getPakistanDateTime().toISOString() // Timestamp
     ]);
 
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
   } catch (error) {
     ErrorLogger.log('createMultipleWorkloadRecords', error, { id, workloads });
     throw new Error('Failed to save workload records.');
@@ -799,7 +800,7 @@ function processForm(formObject, currentUser, token) {
       formatWorkloadData(formObject.workloads), // O: Workload
       formattedContacts,                    // P: Contact Info
       formObject.IMAGE || "",               // Q: Image
-      getPakistanDateTime().toLocaleString(),                                    // R: Reserved (if needed)
+      getPakistanDateTime().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: true }), // R: Timestamp in AM/PM format
       ""                                     // S: Reserved (if needed)
     ]];
     createRecord(values);
@@ -813,7 +814,8 @@ function processForm(formObject, currentUser, token) {
     );
 
     // 10) Create workload record (if competitor info is provided)
-    createMultipleWorkloadRecords(uniqueId, formObject.Customer, formObject.workloads);
+    // New: include the username as the fourth argument
+    createMultipleWorkloadRecords(uniqueId, formObject.Customer, formObject.workloads, currentUser);
     AuditLogger.log('Form Submission', currentUser, { id: uniqueId, customer: formObject.Customer });
     return "Data successfully submitted by Sales Person: " + currentUser;
   } catch (error) {

@@ -641,7 +641,10 @@ function getContactPersonsData() {
 
   function getWorkloadData() {
     const items = document.querySelectorAll('.workload-item');
+    const customer = document.getElementById('Customer') ? document.getElementById('Customer').value : '';
     return Array.from(items).map(item => ({
+      addedBy: window.currentUser || '', // Current user's name
+      customer: sanitizeInput(customer),
       competitor: sanitizeInput(item.querySelector('.workload-competitor').value),
       competitorModel: sanitizeInput(item.querySelector('.workload-model').value),
       dailyWorkload: sanitizeInput(item.querySelector('.workload-daily').value),
@@ -1104,7 +1107,8 @@ function filterFlagsByAnalyzerModel() {
         IMAGE: imageDataUrl || "",
         contactPersons: allContacts,
         nextVisit: sanitizeInput(document.getElementById('nextVisit').value) || "",
-        workloads: getWorkloadData()
+        workloads: getWorkloadData(),
+        submissionTimeStamp: getCurrentPKTTimeStamp()
       };
 
       console.log('Form Object:', formObject); // Debugging line
@@ -1441,6 +1445,10 @@ function filterFlagsByAnalyzerModel() {
     return date.toISOString().split('T')[0];
   }
 
+function getCurrentPKTTimeStamp() {
+  // This uses the Asia/Karachi time zone
+  return new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: false });
+}
   /* =====================================
      EXPORT FUNCTIONS (CSV)
      ===================================== */
