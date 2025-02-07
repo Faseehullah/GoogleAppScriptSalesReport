@@ -12,211 +12,207 @@
      ===================================== */
   document.addEventListener('DOMContentLoaded', function() {
 
-    /***********************************************
-     * NEW CUSTOMER ADDITION (BUTTON & FORM)
-     ***********************************************/
-    const addCustomerBtn = document.getElementById('addCustomerButton');
-    if (addCustomerBtn) {
-      addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
-    }
+      // 1) Close "Customer successfully added!" modal
+      const closeAddCustomerModalBtn = document.getElementById('closeAddCustomerModalBtn');
+      if (closeAddCustomerModalBtn) {
+        closeAddCustomerModalBtn.addEventListener('click', function() {
+          const successModal = document.getElementById('addCustomerSuccessModal');
+          if (successModal) successModal.style.display = 'none';
+        });
+      }
 
-    const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
-    if (saveCustomerBtn) {
-      saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
-    }
+      /***********************************************
+       * NEW CUSTOMER ADDITION (BUTTON & FORM)
+       ***********************************************/
+      const addCustomerBtn = document.getElementById('addCustomerButton');
+      if (addCustomerBtn) {
+        addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
+      }
 
-    const cancelAddCustomerBtn = document.getElementById('cancelAddCustomerButton');
-    if (cancelAddCustomerBtn) {
-      cancelAddCustomerBtn.addEventListener('click', resetAddCustomerForm);
-    }
+      const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
+      if (saveCustomerBtn) {
+        saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
+      }
 
-    /***********************************************
-     * MANUAL CONTACTS (BUTTON TO ADD MORE)
-     ***********************************************/
-    const addContactPersonBtn = document.getElementById('addContactPersonBtn');
-    if (addContactPersonBtn) {
-      addContactPersonBtn.addEventListener('click', function() {
-        addContactPerson(); // Add a new manual contact person
-      });
-    }
+      const cancelAddCustomerBtn = document.getElementById('cancelAddCustomerButton');
+      if (cancelAddCustomerBtn) {
+        cancelAddCustomerBtn.addEventListener('click', resetAddCustomerForm);
+      }
 
-    // Event delegation for removing manual contacts
-    const manualContactsContainer = document.getElementById('manualContactsContainer');
-    if (manualContactsContainer) {
-      manualContactsContainer.addEventListener('click', function(event) {
-        if (event.target && event.target.classList.contains('remove-contact')) {
-          removeContactPerson(event.target);
-        }
-      });
-    }
+      /***********************************************
+       * MANUAL CONTACTS (BUTTON TO ADD MORE)
+       ***********************************************/
+      const addContactPersonBtn = document.getElementById('addContactPersonBtn');
+      if (addContactPersonBtn) {
+        addContactPersonBtn.addEventListener('click', function() {
+          addContactPerson(); // Add a new manual contact person
+        });
+      }
 
-    /***********************************************
-     * WORKLOAD LAYOUT
-     ***********************************************/
-    const addWorkloadBtn = document.getElementById('addWorkloadBtn');
-    if (addWorkloadBtn) {
-      addWorkloadBtn.addEventListener('click', addWorkloadItem);
-    }
+      // Event delegation for removing manual contacts
+      const manualContactsContainer = document.getElementById('manualContactsContainer');
+      if (manualContactsContainer) {
+        manualContactsContainer.addEventListener('click', function(event) {
+          if (event.target && event.target.classList.contains('remove-contact')) {
+            removeContactPerson(event.target);
+          }
+        });
+      }
 
-    const workloadContainer = document.getElementById('workloadContainer');
-    if (workloadContainer) {
-      workloadContainer.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('remove-workload')) {
-          removeWorkloadItem(e.target);
-        }
-      });
-    }
+      /***********************************************
+       * WORKLOAD LAYOUT
+       ***********************************************/
+      const addWorkloadBtn = document.getElementById('addWorkloadBtn');
+      if (addWorkloadBtn) {
+        addWorkloadBtn.addEventListener('click', addWorkloadItem);
+      }
 
-    /***********************************************
-     * BUTTONS & MODALS (ADD MORE, CLOSE ERROR, ETC.)
-     ***********************************************/
-    const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
-    const noAddMoreBtn = document.getElementById('noAddMoreBtn');
-    if (yesAddMoreBtn) {
-      yesAddMoreBtn.addEventListener('click', function() {
-        handleModalResponse(true);
-      });
-    }
-    if (noAddMoreBtn) {
-      noAddMoreBtn.addEventListener('click', function() {
-        handleModalResponse(false);
-      });
-    }
+      const workloadContainer = document.getElementById('workloadContainer');
+      if (workloadContainer) {
+        workloadContainer.addEventListener('click', function(e) {
+          if (e.target && e.target.classList.contains('remove-workload')) {
+            removeWorkloadItem(e.target);
+          }
+        });
+      }
 
-    const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
-    if (closeErrorModalBtn) {
-      closeErrorModalBtn.addEventListener('click', closeErrorModal);
-    }
+      /***********************************************
+       * BUTTONS & MODALS (ADD MORE, CLOSE ERROR, ETC.)
+       ***********************************************/
+      const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
+      const noAddMoreBtn = document.getElementById('noAddMoreBtn');
+      if (yesAddMoreBtn) {
+        yesAddMoreBtn.addEventListener('click', function() {
+          handleModalResponse(true);
+        });
+      }
+      if (noAddMoreBtn) {
+        noAddMoreBtn.addEventListener('click', function() {
+          handleModalResponse(false);
+        });
+      }
 
-    /***********************************************
-     * LOGIN & FORGOT PASSWORD
-     ***********************************************/
-    const loginBtn = document.getElementById('loginButton');
-    if (loginBtn) {
-      loginBtn.addEventListener('click', login);
-    }
+      const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
+      if (closeErrorModalBtn) {
+        closeErrorModalBtn.addEventListener('click', closeErrorModal);
+      }
 
-    const forgotLink = document.getElementById('forgotPasswordLink');
-    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
-    const resetButton = document.getElementById('resetPasswordButton');
-    const cancelButton = document.getElementById('cancelResetButton');
+      /***********************************************
+       * LOGIN & FORGOT PASSWORD
+       ***********************************************/
+      const loginBtn = document.getElementById('loginButton');
+      if (loginBtn) {
+        loginBtn.addEventListener('click', login);
+      }
 
-    if (forgotLink) {
-      forgotLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (forgotPasswordModal) {
-          forgotPasswordModal.style.display = 'flex';
-        }
-      });
-    }
-    if (resetButton) {
-      resetButton.addEventListener('click', function() {
-        const userInput = document.getElementById('resetEmailOrUsername').value.trim();
-        if (!userInput) {
-          showCustomError('Please enter your email or username.');
-          return;
-        }
-        const resetSpinner = document.getElementById('resetSpinner');
-        if (resetSpinner) {
-          resetSpinner.style.display = 'inline-block';
-        }
-        google.script.run
-          .withSuccessHandler(function(response) {
-            if (resetSpinner) {
-              resetSpinner.style.display = 'none';
-            }
-            if (response.success) {
-              alert(response.message);
-              if (forgotPasswordModal) {
-                forgotPasswordModal.style.display = 'none';
+      const forgotLink = document.getElementById('forgotPasswordLink');
+      const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+      const resetButton = document.getElementById('resetPasswordButton');
+      const cancelButton = document.getElementById('cancelResetButton');
+
+      if (forgotLink) {
+        forgotLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'flex';
+          }
+        });
+      }
+      if (resetButton) {
+        resetButton.addEventListener('click', function() {
+          const userInput = document.getElementById('resetEmailOrUsername').value.trim();
+          if (!userInput) {
+            showCustomError('Please enter your email or username.');
+            return;
+          }
+          const resetSpinner = document.getElementById('resetSpinner');
+          if (resetSpinner) {
+            resetSpinner.style.display = 'inline-block';
+          }
+          google.script.run
+            .withSuccessHandler(function(response) {
+              if (resetSpinner) {
+                resetSpinner.style.display = 'none';
               }
-            } else {
-              showCustomError(response.message);
-            }
-          })
-          .withFailureHandler(function(error) {
-            if (resetSpinner) {
-              resetSpinner.style.display = 'none';
-            }
-            showCustomError('Error sending reset request.');
-          })
-          .forgotPassword(userInput);
-      });
-    }
-    if (cancelButton) {
-      cancelButton.addEventListener('click', function() {
-        if (forgotPasswordModal) {
-          forgotPasswordModal.style.display = 'none';
-        }
-      });
-    }
+              if (response.success) {
+                alert(response.message);
+                if (forgotPasswordModal) {
+                  forgotPasswordModal.style.display = 'none';
+                }
+              } else {
+                showCustomError(response.message);
+              }
+            })
+            .withFailureHandler(function(error) {
+              if (resetSpinner) {
+                resetSpinner.style.display = 'none';
+              }
+              showCustomError('Error sending reset request.');
+            })
+            .forgotPassword(userInput);
+        });
+      }
+      if (cancelButton) {
+        cancelButton.addEventListener('click', function() {
+          if (forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'none';
+          }
+        });
+      }
 
-    /***********************************************
-     * IMAGE HANDLING (UPLOAD, PREVIEW, REMOVE)
-     ***********************************************/
-    const removeImageBtn = document.getElementById('removeImageButton');
-    if (removeImageBtn) {
-      removeImageBtn.addEventListener('click', removeImage);
-    }
+      /***********************************************
+       * EXPORT DATA (IF BUTTON EXISTS)
+       ***********************************************/
+      const exportBtn = document.getElementById('exportDataButton');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', exportSalesData);
+      }
 
-    const imageUploadInput = document.getElementById('imageUpload');
-    if (imageUploadInput) {
-      imageUploadInput.addEventListener('change', previewImage);
-    }
+      /***********************************************
+       * CHANGE CUSTOMER BUTTON (IF YOU WANT TO ALLOW RE-SELECTION)
+       ***********************************************/
+      const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+      if (changeCustomerBtn) {
+        changeCustomerBtn.addEventListener('click', function() {
+          // Re-enable the dropdown
+          const customerSelect = document.getElementById('Customer');
+          if (customerSelect) {
+            customerSelect.disabled = false;
+          }
 
-    /***********************************************
-     * EXPORT DATA (IF BUTTON EXISTS)
-     ***********************************************/
-    const exportBtn = document.getElementById('exportDataButton');
-    if (exportBtn) {
-      exportBtn.addEventListener('click', exportSalesData);
-    }
+          // Hide the button
+          changeCustomerBtn.style.display = 'none';
 
-    /***********************************************
-     * CHANGE CUSTOMER BUTTON (IF YOU WANT TO ALLOW RE-SELECTION)
-     ***********************************************/
-    const changeCustomerBtn = document.getElementById('changeCustomerBtn');
-    if (changeCustomerBtn) {
-      changeCustomerBtn.addEventListener('click', function() {
-        // Re-enable the dropdown
-        const customerSelect = document.getElementById('Customer');
-        if (customerSelect) {
-          customerSelect.disabled = false;
-        }
+          // Optionally hide any label that shows the selected customer
+          const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
+          if (selectedCustomerLabel) {
+            selectedCustomerLabel.style.display = 'none';
+            selectedCustomerLabel.textContent = '';
+          }
 
-        // Hide the button
-        changeCustomerBtn.style.display = 'none';
+          // Reset existing contacts
+          resetContactsSection();
+        });
+      }
 
-        // Optionally hide any label that shows the selected customer
-        const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
-        if (selectedCustomerLabel) {
-          selectedCustomerLabel.style.display = 'none';
-          selectedCustomerLabel.textContent = '';
-        }
-
-        // Reset existing contacts
-        resetContactsSection();
-      });
-    }
-
-    /***********************************************
-     * TOGGLE EXISTING CONTACTS SECTION
-     ***********************************************/
-    const toggleExistingContactsBtn = document.getElementById('toggleExistingContactsBtn');
-    const existingContactsCollapsible = document.getElementById('existingContactsCollapsible');
-    if (toggleExistingContactsBtn && existingContactsCollapsible) {
-      toggleExistingContactsBtn.addEventListener('click', function() {
-        if (existingContactsCollapsible.classList.contains('expanded')) {
-          existingContactsCollapsible.classList.remove('expanded');
-          existingContactsCollapsible.classList.add('collapsed');
-          toggleExistingContactsBtn.textContent = 'Show Existing Contacts';
-        } else {
-          existingContactsCollapsible.classList.remove('collapsed');
-          existingContactsCollapsible.classList.add('expanded');
-          toggleExistingContactsBtn.textContent = 'Hide Existing Contacts';
-        }
-      });
-    }
+      /***********************************************
+       * TOGGLE EXISTING CONTACTS SECTION
+       ***********************************************/
+      const toggleExistingContactsBtn = document.getElementById('toggleExistingContactsBtn');
+      const existingContactsCollapsible = document.getElementById('existingContactsCollapsible');
+      if (toggleExistingContactsBtn && existingContactsCollapsible) {
+        toggleExistingContactsBtn.addEventListener('click', function() {
+          if (existingContactsCollapsible.classList.contains('expanded')) {
+            existingContactsCollapsible.classList.remove('expanded');
+            existingContactsCollapsible.classList.add('collapsed');
+            toggleExistingContactsBtn.textContent = 'Show Existing Contacts';
+          } else {
+            existingContactsCollapsible.classList.remove('collapsed');
+            existingContactsCollapsible.classList.add('expanded');
+            toggleExistingContactsBtn.textContent = 'Hide Existing Contacts';
+          }
+        });
+      }
   });
 
   /* =====================================
@@ -391,145 +387,144 @@
       .getExistingContacts(customerId);
   }
 
-  function addSelectedContacts() {
-    const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
-    if (checkboxes.length === 0) {
-      showCustomError('Please select at least one existing contact to add.');
-      return;
-    }
+function addSelectedContacts() {
+  const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
+  if (checkboxes.length === 0) {
+    showCustomError('Please select at least one existing contact to add.');
+    return;
+  }
 
-    const manualContainer = document.getElementById('contactPersonsContainer'); 
-    if (!manualContainer) return;
-    let addedCount = 0;
+  // Use the correct container ID
+  const manualContainer = document.getElementById('manualContactsContainer'); 
+  if (!manualContainer) return;
+  let addedCount = 0;
 
-    checkboxes.forEach(cb => {
-      const contactIndex = cb.value;
-      const contact = window.existingContactsData[contactIndex];
-      if (contact) {
-        // Find the first empty contact person field
-        const contactPersons = manualContainer.querySelectorAll('.contact-person');
-        let fieldFilled = false;
-        for (let cp of contactPersons) {
-          const nameInput = cp.querySelector('.contact-name');
-          const postInput = cp.querySelector('.contact-post');
-          const numberInput = cp.querySelector('.contact-number');
+  checkboxes.forEach(cb => {
+    // Convert value to number (if needed)
+    const contactIndex = parseInt(cb.value, 10);
+    const contact = window.existingContactsData[contactIndex];
+    if (contact) {
+      // Find the first empty contact person field inside the manual container
+      const contactPersons = manualContainer.querySelectorAll('.contact-person');
+      let fieldFilled = false;
+      for (let cp of contactPersons) {
+        const nameInput = cp.querySelector('.contact-name');
+        const postInput = cp.querySelector('.contact-post');
+        const numberInput = cp.querySelector('.contact-number');
 
-          if (!nameInput.value.trim() && !postInput.value.trim() && !numberInput.value.trim()) {
-            // Populate this contact person
-            nameInput.value = contact.name;
-            postInput.value = contact.post;
-            numberInput.value = contact.number !== 'N/A' ? contact.number : '';
-            fieldFilled = true;
-            addedCount++;
-            break;
-          }
-        }
-
-        if (!fieldFilled) {
-          // If no empty fields, add a new contact person
-          addContactPerson({
-            name: contact.name,
-            post: contact.post,
-            number: contact.number !== 'N/A' ? contact.number : ''
-          });
+        if (!nameInput.value.trim() && !postInput.value.trim() && !numberInput.value.trim()) {
+          nameInput.value = contact.name;
+          postInput.value = contact.post;
+          numberInput.value = (contact.number && contact.number !== 'N/A') ? contact.number : '';
+          fieldFilled = true;
           addedCount++;
+          break;
         }
       }
-    });
-
-    if (addedCount > 0) {
-      showConfirmationMessage(`${addedCount} contact(s) added successfully.`);
-    } else {
-      showCustomError('No contacts were added.');
+      
+      if (!fieldFilled) {
+        // Add a new contact person if no empty entry was found
+        addContactPerson({
+          name: contact.name,
+          post: contact.post,
+          number: (contact.number && contact.number !== 'N/A') ? contact.number : ''
+        });
+        addedCount++;
+      }
     }
+  });
 
-    // Optionally uncheck the checkboxes
-    checkboxes.forEach(cb => cb.checked = false);
+  if (addedCount > 0) {
+    showConfirmationMessage(`${addedCount} contact(s) added successfully.`);
+  } else {
+    showCustomError('No contacts were added.');
   }
 
-  function resetContactsSection() {
-    const existingContactsContainer = document.getElementById('existingContactsContainer');
-    if (existingContactsContainer) {
-      existingContactsContainer.innerHTML = '';
-    }
+  // Optionally uncheck the checkboxes
+  checkboxes.forEach(cb => cb.checked = false);
+}
 
-    // Reset the manual container to a single blank contact
-    const contactPersonsContainer = document.getElementById('contactPersonsContainer');
-    if (contactPersonsContainer) {
-      contactPersonsContainer.innerHTML = `
-        <div class="contact-person" data-index="0">
-          <div class="contact-header">
-            <h4>Contact Person <span class="contact-letter">A</span></h4>
-            <button type="button" class="remove-contact" style="display: none;">×</button>
+function resetContactsSection() {
+  const existingContactsContainer = document.getElementById('existingContactsContainer');
+  if (existingContactsContainer) {
+    existingContactsContainer.innerHTML = '';
+  }
+
+  // Reset the manual contacts container to a single blank contact
+  const container = document.getElementById('manualContactsContainer');
+  if (container) {
+    container.innerHTML = `
+      <div class="contact-person" data-index="0">
+        <div class="contact-header">
+          <h4>Contact Person <span class="contact-letter">A</span></h4>
+          <button type="button" class="remove-contact btn btn-danger" style="display: none;">×</button>
+        </div>
+        <div class="contact-fields">
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" class="contact-name" placeholder="Enter name" required aria-required="true">
           </div>
-          <div class="contact-fields">
-            <div class="form-group">
-              <label>Name:</label>
-              <input type="text" class="contact-name" placeholder="Enter name">
-            </div>
-            <div class="form-group">
-              <label>Post:</label>
-              <input type="text" class="contact-post" placeholder="Enter designation">
-            </div>
-            <div class="form-group">
-              <label>Contact Number:</label>
-              <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
-            </div>
+          <div class="form-group">
+            <label>Post:</label>
+            <input type="text" class="contact-post" placeholder="Enter designation" required aria-required="true">
+          </div>
+          <div class="form-group">
+            <label>Contact Number:</label>
+            <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
           </div>
         </div>
-      `;
-    }
+      </div>
+    `;
   }
+}
 
   /* =====================================
      MANUAL CONTACT PERSONS (CORE FUNCTIONS)
      ===================================== */
-  function addContactPerson(existingData = null) {
-    const container = document.getElementById('contactPersonsContainer');
-    if (!container) return;
-    const contacts = container.getElementsByClassName('contact-person');
+function addContactPerson(existingData = null) {
+  const container = document.getElementById('manualContactsContainer');
+  if (!container) return;
+  const contacts = container.getElementsByClassName('contact-person');
 
-    // Limit to 26 letters
-    if (contacts.length >= 26) {
-      showCustomError('Maximum number of contact persons (26) reached');
-      return;
-    }
-
-    // Clone the first contact-person as a template
-    const template = contacts[0].cloneNode(true);
-    const newIndex = contacts.length;
-
-    // Update letter label
-    template.setAttribute('data-index', newIndex);
-    const letterSpan = template.querySelector('.contact-letter');
-    if (letterSpan) {
-      letterSpan.textContent = String.fromCharCode(65 + newIndex);
-    }
-
-    const nameInput = template.querySelector('.contact-name');
-    const postInput = template.querySelector('.contact-post');
-    const numberInput = template.querySelector('.contact-number');
-
-    if (existingData) {
-      // Populate from existing data
-      if (nameInput) nameInput.value = existingData.name;
-      if (postInput) postInput.value = existingData.post;
-      if (numberInput) numberInput.value = existingData.number;
-    } else {
-      // Otherwise clear
-      if (nameInput) nameInput.value = '';
-      if (postInput) postInput.value = '';
-      if (numberInput) numberInput.value = '';
-    }
-
-    // Show remove button
-    const removeBtn = template.querySelector('.remove-contact');
-    if (removeBtn) {
-      removeBtn.style.display = 'block';
-    }
-
-    container.appendChild(template);
+  if (contacts.length >= 26) {
+    showCustomError('Maximum number of contact persons (26) reached');
+    return;
   }
+
+  // Clone the first contact-person as a template
+  const template = contacts[0].cloneNode(true);
+  const newIndex = contacts.length;
+
+  // Update the data-index and letter label (A, B, C, etc.)
+  template.setAttribute('data-index', newIndex);
+  const letterSpan = template.querySelector('.contact-letter');
+  if (letterSpan) {
+    letterSpan.textContent = String.fromCharCode(65 + newIndex);
+  }
+
+  const nameInput = template.querySelector('.contact-name');
+  const postInput = template.querySelector('.contact-post');
+  const numberInput = template.querySelector('.contact-number');
+
+  if (existingData) {
+    if (nameInput) nameInput.value = existingData.name;
+    if (postInput) postInput.value = existingData.post;
+    if (numberInput) numberInput.value = existingData.number;
+  } else {
+    if (nameInput) nameInput.value = '';
+    if (postInput) postInput.value = '';
+    if (numberInput) numberInput.value = '';
+  }
+
+  // Ensure the remove button is visible for additional entries
+  const removeBtn = template.querySelector('.remove-contact');
+  if (removeBtn) {
+    removeBtn.style.display = 'block';
+  }
+
+  container.appendChild(template);
+  updateContactLetters();
+}
 
   function removeContactPerson(button) {
     // Confirm before removing
@@ -589,14 +584,15 @@
     return isValid;
   }
 
-  function getContactPersonsData() {
-    const contacts = document.querySelectorAll('#contactPersonsContainer .contact-person');
-    return Array.from(contacts).map(contact => ({
-      name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
-      post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
-      number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
-    }));
-  }
+function getContactPersonsData() {
+  const contacts = document.querySelectorAll('#manualContactsContainer .contact-person');
+  return Array.from(contacts).map(contact => ({
+    name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
+    post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
+    number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
+  }));
+}
+
 
   /* =====================================
      WORKLOAD MANAGEMENT
@@ -894,54 +890,54 @@
     }
   }
 
-  function filterFlagsByAnalyzerModel() {
-    const product = document.getElementById('Product').value;
-    const analyzerModel = document.getElementById('AnalyzerModel').value;
-    const flagsSelect = document.getElementById('Flags');
-    const categoryInput = document.getElementById('Category');
+function filterFlagsByAnalyzerModel() {
+  const product = document.getElementById('Product').value;
+  const analyzerModel = document.getElementById('AnalyzerModel').value;
+  // Declare flagsSelect here
+  const flagsSelect = document.getElementById('Flags');
+  const categoryInput = document.getElementById('Category');
 
-    // Reset Flags and Category
-    clearDropdown('Flags');
-    categoryInput.value = '';
+  // Reset Flags and Category
+  clearDropdown('Flags');
+  categoryInput.value = '';
+  if (flagsSelect) {
+    flagsSelect.disabled = true;
+  }
+  if (categoryInput) {
+    categoryInput.disabled = true;
+  }
+
+  if (product && analyzerModel) {
+    showLoadingDots('flagsLoading', true);
+    google.script.run
+      .withSuccessHandler(function(flags) {
+        console.log('Flags received:', flags); // Debugging line
+        if (flags.length === 0) {
+          showCustomError('No Flags found for the selected Analyzer Model.');
+        }
+        populateDropdown('Flags', flags);
+        // Re-fetch flagsSelect in case the dropdown was repopulated
+        const flagsSelect = document.getElementById('Flags');
+        if (flagsSelect) {
+          flagsSelect.disabled = false;
+          // Attach change listener to Flags dropdown
+          flagsSelect.addEventListener('change', filterCategoryByFlag);
+        }
+        showLoadingDots('flagsLoading', false);
+      })
+      .withFailureHandler(function(error) {
+        console.error('Failed to load flags:', error);
+        showLoadingDots('flagsLoading', false);
+        showCustomError('Failed to load flags. Please try again.');
+      })
+      .getFlagsByProductAndAnalyzer(product, analyzerModel);
+  } else {
     if (flagsSelect) {
       flagsSelect.disabled = true;
     }
-    if (categoryInput) {
-      categoryInput.disabled = true;
-    }
-
-    if (product && analyzerModel) {
-      showLoadingDots('flagsLoading', true);
-      google.script.run
-        .withSuccessHandler(function(flags) {
-          console.log('Flags received:', flags); // Debugging line
-          if (flags.length === 0) {
-            showCustomError('No Flags found for the selected Analyzer Model.');
-          }
-          populateDropdown('Flags', flags);
-          if (flagsSelect) {
-            flagsSelect.disabled = false;
-          }
-          showLoadingDots('flagsLoading', false);
-
-          // Attach change listener to Flags dropdown
-          if (flagsSelect) {
-            flagsSelect.addEventListener('change', filterCategoryByFlag);
-          }
-        })
-        .withFailureHandler(function(error) {
-          console.error('Failed to load flags:', error);
-          showLoadingDots('flagsLoading', false);
-          showCustomError('Failed to load flags. Please try again.');
-        })
-        .getFlagsByProductAndAnalyzer(product, analyzerModel);
-    } else {
-      if (flagsSelect) {
-        flagsSelect.disabled = true;
-      }
-      showLoadingDots('flagsLoading', false);
-    }
+    showLoadingDots('flagsLoading', false);
   }
+}
 
 
   /**
@@ -1162,16 +1158,16 @@
         <div class="contact-person" data-index="0">
           <div class="contact-header">
             <h4>Contact Person <span class="contact-letter">A</span></h4>
-            <button type="button" class="remove-contact" style="display: none;">×</button>
+            <button type="button" class="remove-contact btn btn-danger" style="display: none;">×</button>
           </div>
           <div class="contact-fields">
             <div class="form-group">
               <label>Name:</label>
-              <input type="text" class="contact-name" placeholder="Enter name">
+              <input type="text" class="contact-name" placeholder="Enter name" required aria-required="true">
             </div>
             <div class="form-group">
               <label>Post:</label>
-              <input type="text" class="contact-post" placeholder="Enter designation">
+              <input type="text" class="contact-post" placeholder="Enter designation" required aria-required="true">
             </div>
             <div class="form-group">
               <label>Contact Number:</label>
