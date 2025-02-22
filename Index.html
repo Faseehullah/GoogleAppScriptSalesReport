@@ -319,6 +319,8 @@
       </div>
     </form>
 
+    
+
     <!-- =====================================
          Add Customer Manual Form Success Modal
          ===================================== -->
@@ -343,17 +345,40 @@
          Confirmation Message
          ===================================== -->
     <div class="confirmation-message" id="confirmationMessage" style="display:none;">Data successfully submitted!</div>
+    <section id="reportingSection" style="display:none; margin: 30px 0;">
+      <h3>My Reports</h3>
+      <p>Select a date range (optional). Leave blank to get ALL data.</p>
+
+      <div class="form-group" style="max-width: 300px;">
+        <label>From Date:</label>
+        <input type="date" id="reportFromDate">
+      </div>
+      <div class="form-group" style="max-width: 300px;">
+        <label>To Date:</label>
+        <input type="date" id="reportToDate">
+      </div>
+
+      <button id="viewReportBtn" class="btn btn-secondary">View Data</button>
+      <button id="downloadReportBtn" class="btn btn-primary">Download CSV</button>
+      <div class="spinner" id="reportSpinner" style="display:none; margin-left:10px;"></div>
+
+      <div id="reportResults" style="margin-top:20px;"></div>
+    </section>
+    
   </main>
 
   <!-- =====================================
        Footer Section
-       ===================================== -->
+    ===================================== -->
+
   <footer>
     Nextek_Fas_Sales_Reporting_Version_1.1.0
+    <!-- =====================================
     <div style="margin-top: 10px;">
       <a href="?page=extraction" target="_blank">Sales Data Extraction</a> |
       <a href="?page=extractionreport" target="_blank">View Extraction Report</a>
     </div>
+        ===================================== -->
   </footer>
 
   <!-- Include the external Script.html for JavaScript -->

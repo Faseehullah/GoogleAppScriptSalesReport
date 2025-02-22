@@ -3,7 +3,7 @@
  **************************/
 const Config = {
   SPREADSHEET: {
-    ID: "1mypSn1d0lZtM_Aww0EWb2Ovc__HRdFsvJ06HVhYUvls",
+    ID: "1mypSn1d0lZtM_Aww0EWb2Ovc__HRdFsvJ06HVhYUvls", // <-- Update this to your actual Spreadsheet ID
     RANGES: {
       // Main data is appended here
       DATA: "MAIN!A2:S",
@@ -149,22 +149,13 @@ class AuditLogger {
 /**************************
  * PAGE ROUTING
  **************************/
+// We only have a single page "Index.html" to serve by default
 function doGet(e) {
   try {
-    let page = e.parameter.page;
-    let template;
-    
-    if (page === 'extraction') {
-      template = HtmlService.createTemplateFromFile('extraction');
-    } else if (page === 'extractionreport') {
-      template = HtmlService.createTemplateFromFile('extractionreport');
-    } else {
-      // Default: show the main Index
-      template = HtmlService.createTemplateFromFile('Index');
-    }
-
-    return template.evaluate()
-      .setTitle('Sales Report')
+    // Serve the main Index page
+    return HtmlService.createTemplateFromFile('Index')
+      .evaluate()
+      .setTitle('Nextek Healthcare - Sales Report')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
     ErrorLogger.log('doGet', error, { parameters: e.parameter });
@@ -185,6 +176,7 @@ function checkLogin(username, password) {
     const attemptsInfo = userLoginAttempts[username] || { attempts: 0, lastAttempt: 0 };
     const currentTime = Math.floor(Date.now() / 1000); // in seconds
 
+    // If user has too many attempts in the last X seconds
     if (attemptsInfo.attempts >= Config.SECURITY.MAX_LOGIN_ATTEMPTS &&
         (currentTime - attemptsInfo.lastAttempt) < Config.SECURITY.LOGIN_TIMEOUT_SECONDS) {
       return { 
@@ -236,11 +228,7 @@ function checkLogin(username, password) {
   }
 }
 
-/**
- * Hashes a password using SHA-256.
- * @param {string} password - The plain text password.
- * @returns {string} - The hashed password in hexadecimal format.
- */
+/** Hashes a password using SHA-256. */
 function hashPassword(password) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password)
     .map(function(byte) {
@@ -250,8 +238,7 @@ function hashPassword(password) {
 }
 
 /**************************
- * "FORGOT PASSWORD" FEATURE
- * - Generates a new password, updates the sheet, and emails the user.
+ * "FORGOT PASSWORD"
  **************************/
 function forgotPassword(emailOrUsername) {
   try {
@@ -279,8 +266,6 @@ function forgotPassword(emailOrUsername) {
     const newHashed = hashPassword(newPlainPassword);
 
     // 4) Update the credential in the sheet
-    //    The range starts at T2 => row 2 in DATASHEETS, so rowIndex=0 => T2, rowIndex=1 => T3, etc.
-    //    T=column 20, U=21, V=22, W=23. The hashed password is in column U
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("DATASHEETS");
     const startRow = 2; // T2 is row 2
     const rowToUpdate = startRow + rowIndex; 
@@ -292,7 +277,6 @@ function forgotPassword(emailOrUsername) {
     if (!userEmail) {
       return { success: false, message: "No email on file for user." };
     }
-    // Use GmailApp to send
     GmailApp.sendEmail(
       userEmail,
       "Password Reset",
@@ -313,7 +297,6 @@ Your Company`
   }
 }
 
-/** Generates a random password of given length with letters, digits, and special chars */
 function generateRandomPassword(length) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$!";
   let result = "";
@@ -348,8 +331,8 @@ function getDropdownDataCached(name) {
     
     const rangeMap = {
       'Product': 'PRODUCT',
-      'Department': 'DEPARTMENT', // Updated to DEPARTMENT
-      // Add other mappings as needed
+      'Department': 'DEPARTMENT', 
+      // Add other mappings if needed
     };
     
     const range = Config.SPREADSHEET.RANGES[rangeMap[name]];
@@ -358,11 +341,11 @@ function getDropdownDataCached(name) {
     }
     
     const data = readRecord(range);
-    // Remove duplicates and sanitize
+    // Remove duplicates
     const uniqueData = [...new Set(data.map(row => row[0] ? row[0].trim() : '').filter(Boolean))];
     const formattedData = uniqueData.map(item => [item]);
     
-    cache.put(cacheKey, JSON.stringify(formattedData), 180); // Cache for 3 mins
+    cache.put(cacheKey, JSON.stringify(formattedData), 180); // 3 mins
     return formattedData;
   } catch (error) {
     ErrorLogger.log('getDropdownDataCached', error, { name });
@@ -389,7 +372,7 @@ function getCityByRegion(region) {
     
     const uniqueCities = [...new Set(
       regionData
-        .map((row, index) => (row[0] === region ? cityData[index][0] : null))
+        .map((row, idx) => (row[0] === region ? cityData[idx][0] : null))
         .filter(city => city && city.trim() !== '')
     )];
     
@@ -408,8 +391,8 @@ function getCustomersByCity(city) {
     
     const uniqueCustomers = [...new Set(
       cityData
-        .map((row, index) => (row[0] === city ? customerData[index][0] : null))
-        .filter(customer => customer && customer.trim() !== '')
+        .map((row, idx) => (row[0] === city ? customerData[idx][0] : null))
+        .filter(cust => cust && cust.trim() !== '')
     )];
     
     return uniqueCustomers.map(customer => [customer]);
@@ -421,7 +404,7 @@ function getCustomersByCity(city) {
 
 function getUniqueProducts() {
   try {
-    const data = readRecord(Config.SPREADSHEET.RANGES.PRODUCT); // "FLAGS!A2:A350"
+    const data = readRecord(Config.SPREADSHEET.RANGES.PRODUCT);
     const uniqueProducts = [...new Set(data.map(row => row[0] ? row[0].trim() : '').filter(Boolean))];
     return uniqueProducts.map(product => [product]);
   } catch (error) {
@@ -430,17 +413,11 @@ function getUniqueProducts() {
   }
 }
 
-/**
- * Fetches Analyzers based on selected Product.
- * Ensures uniqueness of Analyzer Models per Product.
- * @param {string} product
- * @return {Array} Array of Analyzer Models
- */
 function getAnalyzersByProduct(product) {
   try {
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("FLAGS");
-    const productData = sheet.getRange("A2:A350").getValues(); // Product
-    const analyzerData = sheet.getRange("B2:B350").getValues(); // Analyzer Model
+    const productData = sheet.getRange("A2:A350").getValues();
+    const analyzerData = sheet.getRange("B2:B350").getValues();
     
     const analyzers = [];
     for (let i = 0; i < productData.length; i++) {
@@ -451,25 +428,19 @@ function getAnalyzersByProduct(product) {
     }
 
     const uniqueAnalyzers = [...new Set(analyzers)];
-    return uniqueAnalyzers.map(analyzer => [analyzer]);
+    return uniqueAnalyzers.map(a => [a]);
   } catch (error) {
     ErrorLogger.log('getAnalyzersByProduct', error, { product });
     return [];
   }
 }
 
-/**
- * Fetches Flags based on selected Product and Analyzer Model.
- * @param {string} product
- * @param {string} analyzerModel
- * @return {Array} Array of Flags
- */
 function getFlagsByProductAndAnalyzer(product, analyzerModel) {
   try {
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("FLAGS");
     const flagData = sheet.getRange("C2:D350").getValues(); // [Flag, Category]
-    const productData = sheet.getRange("A2:A350").getValues(); // Product
-    const analyzerData = sheet.getRange("B2:B350").getValues(); // Analyzer Model
+    const productData = sheet.getRange("A2:A350").getValues();
+    const analyzerData = sheet.getRange("B2:B350").getValues();
 
     const flags = [];
     for (let i = 0; i < productData.length; i++) {
@@ -484,7 +455,7 @@ function getFlagsByProductAndAnalyzer(product, analyzerModel) {
     }
 
     const uniqueFlags = [...new Set(flags)];
-    return uniqueFlags.map(flag => [flag]);
+    return uniqueFlags.map(f => [f]);
   } catch (error) {
     ErrorLogger.log('getFlagsByProductAndAnalyzer', error, { product, analyzerModel });
     return [];
@@ -494,7 +465,8 @@ function getFlagsByProductAndAnalyzer(product, analyzerModel) {
 function getCategoryByProductAnalyzerFlag(product, analyzerModel, flag) {
   try {
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("FLAGS");
-    const data = sheet.getRange("A2:D350").getValues(); // [Product, Analyzer Model, Flag, Category]
+    const data = sheet.getRange("A2:D350").getValues(); // [Product, AnalyzerModel, Flag, Category]
+    
     const matchRow = data.find(row => 
       row[0] && row[0].trim().toUpperCase() === product.trim().toUpperCase() &&
       row[1] && row[1].trim().toUpperCase() === analyzerModel.trim().toUpperCase() &&
@@ -510,12 +482,12 @@ function getCategoryByProductAnalyzerFlag(product, analyzerModel, flag) {
 /**************************
  * WORKLOAD MANAGEMENT
  **************************/
-function createMultipleWorkloadRecords(id, customer, workloads,username) {
+function createMultipleWorkloadRecords(id, customer, workloads, username) {
   try {
     if (!Array.isArray(workloads) || workloads.length === 0) return;
 
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("WORKLOAD");
-    // Columns: A: ID, B: Customer, C: Competitor, D: CompetitorModel, E: DailyWorkload, F: PerTestCost, G: Timestamp
+    // Columns: A: ID, B: ADDED BY, C: CUSTOMER, D: Competitor, E: CompetitorModel, F: DailyWorkload, G: PerTestCost, H:Timestamp
 
     const rows = workloads.map(wl => [
       id,
@@ -525,7 +497,7 @@ function createMultipleWorkloadRecords(id, customer, workloads,username) {
       wl.competitorModel || "",
       wl.dailyWorkload || "",
       wl.perTestCost || "",
-      getPakistanDateTime().toISOString() // Timestamp
+      getPakistanDateTime().toISOString()
     ]);
 
     sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
@@ -536,77 +508,29 @@ function createMultipleWorkloadRecords(id, customer, workloads,username) {
 }
 
 /**************************
- * CONTACT PERSON MANAGEMENT 
+ * CONTACT PERSON MANAGEMENT
  **************************/
 function formatContactPersons(contactPersons) {
-  // If you want to store a summary in the main record
   if (!Array.isArray(contactPersons)) return '';
   
-  return contactPersons.map((contact, index) => {
-    const letter = String.fromCharCode(65 + index); // A, B, C...
+  return contactPersons.map((contact, idx) => {
+    const letter = String.fromCharCode(65 + idx); // A, B, C...
     return `${letter}/${contact.name}/${contact.post}/${contact.number || 'N/A'}`;
   }).join(';');
 }
 
-function parseContactPersons(contactString) {
-  if (!contactString) return [];
-  
-  return contactString.split(';').map(contact => {
-    const [letter, name, post, number] = contact.split('/');
-    return {
-      letter,
-      name,
-      post,
-      number: number === 'N/A' ? '' : number
-    };
-  });
-}
-
-function validateContactPerson(contact) {
-  const errors = [];
-  if (!contact.name || contact.name.trim() === '') {
-    errors.push('Contact person name is required');
-  }
-  if (!contact.post || contact.post.trim() === '') {
-    errors.push('Contact person post is required'); 
-  }
-  // Only validate number if provided
-  if (contact.number && contact.number.trim() !== '' && 
-      !/^\+?\d{11,13}$/.test(contact.number.replace(/\s+/g, ''))) {
-    errors.push('Contact number must be 11-13 digits, optionally starting with +');
-  }
-  return errors;
-}
-
-/**
- * Creates contact records in the CONTACTS sheet.
- * Updates existing records if duplicates are found based on name and post.
- * @param {string} id - The unique ID for the main record.
- * @param {string} customerName - The customer's name.
- * @param {Array} contactPersons - An array of contact person objects.
- * @param {string} username - The username of the actor.
- */
-/**
- * Creates contact records in the CONTACTS sheet.
- * Updates existing records if duplicates are found based on name and post.
- * @param {string} id - The unique ID for the main record.
- * @param {string} customerName - The customer's name.
- * @param {Array} contactPersons - An array of contact person objects.
- * @param {string} username - The username of the actor.
- */
 function createContactsRecords(id, customerName, contactPersons, username) {
   try {
     if (!Array.isArray(contactPersons) || contactPersons.length === 0) return;
 
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("CONTACTS");
-    // Columns: A: ID, B: Added by, C: Customer, D: Person Name, E: Designation, F: Contact Number, G: Timestamp
+    // Columns: A:ID, B:AddedBy, C:Customer, D:Name, E:Designation, F:Contact#, G:Timestamp
 
     const existingData = readRecord(Config.SPREADSHEET.RANGES.CONTACTS);
-
     const rowsToAppend = [];
 
     contactPersons.forEach(person => {
-      // Check for duplication based on name and post
+      // Check for duplication
       const duplicate = existingData.find(row => 
         row[3].toUpperCase() === person.name.toUpperCase() &&
         row[4].toUpperCase() === person.post.toUpperCase()
@@ -615,25 +539,22 @@ function createContactsRecords(id, customerName, contactPersons, username) {
       if (!duplicate) {
         // If no duplicate, append as new record
         rowsToAppend.push([
-          id,                          // A: ID
-          username,                    // B: Added by
-          customerName,                // C: Customer
-          person.name.toUpperCase(),   // D: Person Name
-          person.post.toUpperCase(),   // E: Designation
-          person.number,               // F: Contact Number
-          getPakistanDateTime().toISOString() // G: Timestamp
+          id,
+          username,
+          customerName,
+          person.name.toUpperCase(),
+          person.post.toUpperCase(),
+          person.number,
+          getPakistanDateTime().toISOString()
         ]);
       } else {
-        // Update existing record's contact number and timestamp
-        const rowIndex = existingData.indexOf(duplicate) + 2; // Sheets are 1-indexed
-        sheet.getRange(rowIndex, 6).setValue(person.number); // F: Contact Number
-        sheet.getRange(rowIndex, 7).setValue(getPakistanDateTime().toISOString()); // G: Timestamp
+        // Update existing record's contact number + timestamp
+        const rowIndex = existingData.indexOf(duplicate) + 2; 
+        sheet.getRange(rowIndex, 6).setValue(person.number);
+        sheet.getRange(rowIndex, 7).setValue(getPakistanDateTime().toISOString());
 
-        // Log the update
         AuditLogger.log('Updated Existing Contact', username, { 
-          id, 
-          username,
-          customerName, 
+          id, username, customerName, 
           contactName: person.name, 
           contactPost: person.post 
         });
@@ -643,18 +564,15 @@ function createContactsRecords(id, customerName, contactPersons, username) {
     if (rowsToAppend.length > 0) {
       const valueRange = Sheets.newValueRange();
       valueRange.values = rowsToAppend;
-
       Sheets.Spreadsheets.Values.append(
         valueRange,
         Config.SPREADSHEET.ID, 
         Config.SPREADSHEET.RANGES.CONTACTS,
         { valueInputOption: "RAW" }
       );
-
-      // Log the additions
       AuditLogger.log('Added New Contacts', username, { 
         customerName, 
-        contactsAdded: rowsToAppend.map(row => row[3]) // Column D: Person Name
+        contactsAdded: rowsToAppend.map(row => row[3]) 
       });
     }
 
@@ -664,26 +582,18 @@ function createContactsRecords(id, customerName, contactPersons, username) {
   }
 }
 
-/**
- * Retrieves existing contacts for a given customer.
- * Ensures uniqueness based on name and post, keeping the most recent entry.
- * @param {string} customerId - The customer's name.
- * @return {Array} Array of contact person objects.
- */
 function getExistingContacts(customerId) {
   try {
     const data = readRecord(Config.SPREADSHEET.RANGES.CONTACTS);
     
-    // Create a Map to store unique contacts using name+post as key
+    // Map of name+post => most recent entry
     const uniqueContacts = new Map();
     
     data
-      .filter(row => row[2] === customerId) // Corrected index for Customer (column C)
+      .filter(row => row[2] === customerId) // row[2] is Customer
       .forEach(row => {
-        const key = `${row[3]}_${row[4]}`; // name_post as unique key
-        // Keep most recent entry based on timestamp
-        if (!uniqueContacts.has(key) || 
-            new Date(row[6]) > new Date(uniqueContacts.get(key).timestamp)) {
+        const key = `${row[3]}_${row[4]}`;
+        if (!uniqueContacts.has(key) || new Date(row[6]) > new Date(uniqueContacts.get(key).timestamp)) {
           uniqueContacts.set(key, {
             name: row[3],
             post: row[4],
@@ -693,7 +603,6 @@ function getExistingContacts(customerId) {
         }
       });
 
-    // Convert Map values to array and sort by name
     return Array.from(uniqueContacts.values())
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(({name, post, number}) => ({name, post, number}));
@@ -711,17 +620,9 @@ function validateFormData(formObject) {
   const errors = [];
   
   const requiredFields = [
-    'dateOfVisit',
-    'visitType',
-    'Region',
-    'City',
-    'Customer',
-    'Department',
-    'Product',
-    'AnalyzerModel',
-    'Flags',
-    'VISIT_DESCRIPTION',
-    'contactPersons'  // Must have at least one contact
+    'dateOfVisit','visitType','Region','City','Customer',
+    'Department','Product','AnalyzerModel','Flags','VISIT_DESCRIPTION',
+    'contactPersons'
   ];
   
   for (const field of requiredFields) {
@@ -729,16 +630,17 @@ function validateFormData(formObject) {
       errors.push(`${field} is required`);
     }
   }
-  
+
+  // Basic check on dateOfVisit
   if (formObject.dateOfVisit) {
     const visitDate = new Date(formObject.dateOfVisit);
     if (isNaN(visitDate.getTime()) || visitDate > new Date()) {
       errors.push('Invalid visit date');
     }
   }
-  
-  if (formObject.VISIT_DESCRIPTION &&
-      formObject.VISIT_DESCRIPTION.length > 1000) {
+
+  // Limit visit description length
+  if (formObject.VISIT_DESCRIPTION && formObject.VISIT_DESCRIPTION.length > 1000) {
     errors.push('Visit description too long (max 1000 characters)');
   }
   
@@ -752,72 +654,68 @@ function processForm(formObject, currentUser, token) {
       throw new Error('Invalid session');
     }
     
-    // 2) Validate basic form data
+    // 2) Basic validation
     const errors = validateFormData(formObject);
     if (errors.length > 0) {
       return `Validation errors: ${errors.join(', ')}`;
     }
 
-    // 3) If user selected "Add New Customer"
+    // 3) If user selected "**Add New Customer**"
     if (formObject.Customer === "**Add New Customer**" && formObject.newCustomer) {
-      addNewCustomerWithCity(formObject.Region, formObject.newCustomerCity, formObject.newCustomer, currentUser, token);
+      addNewCustomerWithCity(
+        formObject.Region, 
+        formObject.newCustomerCity, 
+        formObject.newCustomer, 
+        currentUser, 
+        token
+      );
       formObject.Customer = formObject.newCustomer;
     }
 
-    // 4) Validate each contact person
-    if (formObject.contactPersons) {
-      const contactErrors = formObject.contactPersons.flatMap(validateContactPerson);
-      if (contactErrors.length > 0) {
-        return `Contact person validation errors: ${contactErrors.join(', ')}`;
-      }
-    }
+    // 4) Validate each contact person (Server-side, optional)
+    //    (You already do client-side checks, but can add more here if needed.)
 
-    // 5) Format the contact persons into a single string if storing in main sheet
+    // 5) Format contact persons into single string for MAIN sheet
     const formattedContacts = formatContactPersons(formObject.contactPersons);
 
     // 6) Next visit date
-    const nextVisit = formObject.nextVisit ? new Date(formObject.nextVisit).toISOString() : '';
+    const nextVisitIso = formObject.nextVisit ? new Date(formObject.nextVisit).toISOString() : '';
 
-    // 7) Generate a unique ID for the main record and for referencing
-    const uniqueId = generateUniqueId();
+    // 7) Unique ID
+    const uniqueId = Utilities.getUuid();
 
-    // 8) Create the main record in "MAIN!A2:S"
+    // 8) Append to MAIN sheet
     const values = [[
-      uniqueId,                             // A: Record ID
-      formObject.dateOfVisit,               // B: Visit Date
-      formObject.visitType,                 // C: Visit Type
-      formObject.Region,                    // D: Region
-      formObject.City,                      // E: City
-      formObject.Customer,                  // F: Customer Name
-      formObject.Department,                // G: Department
-      currentUser,                          // H: Sales Person
-      formObject.Product,                   // I: Product
-      formObject.AnalyzerModel,             // J: Analyzer Model
-      formObject.Flags,                     // K: Flags
-      formObject.Category,                  // L: Category
-      formObject.VISIT_DESCRIPTION,         // M: Visit Description
-      nextVisit,                            // N: Next Visit Date
-      formatWorkloadData(formObject.workloads), // O: Workload
-      formattedContacts,                    // P: Contact Info
-      formObject.IMAGE || "",               // Q: Image
-      getPakistanDateTime().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: true }), // R: Timestamp in AM/PM format
-      ""                                     // S: Reserved (if needed)
+      uniqueId,
+      formObject.dateOfVisit,
+      formObject.visitType,
+      formObject.Region,
+      formObject.City,
+      formObject.Customer,
+      formObject.Department,
+      currentUser,
+      formObject.Product,
+      formObject.AnalyzerModel,
+      formObject.Flags,
+      formObject.Category,
+      formObject.VISIT_DESCRIPTION,
+      nextVisitIso,
+      formatWorkloadData(formObject.workloads),
+      formattedContacts,
+      formObject.IMAGE || "",
+      getCurrentPKTTimeStamp(),
+      ""
     ]];
     createRecord(values);
 
-    // 9) Create separate contact records in CONTACTS sheet
-    createContactsRecords(
-      uniqueId,
-      formObject.Customer,
-      formObject.contactPersons,
-      currentUser
-    );
+    // 9) Create contact records in CONTACTS sheet
+    createContactsRecords(uniqueId, formObject.Customer, formObject.contactPersons, currentUser);
 
-    // 10) Create workload record (if competitor info is provided)
-    // New: include the username as the fourth argument
+    // 10) Create workload records
     createMultipleWorkloadRecords(uniqueId, formObject.Customer, formObject.workloads, currentUser);
+
     AuditLogger.log('Form Submission', currentUser, { id: uniqueId, customer: formObject.Customer });
-    return "Data successfully submitted by Sales Person: " + currentUser;
+    return `Data successfully submitted by Sales Person: ${currentUser}`;
   } catch (error) {
     ErrorLogger.log('processForm', error, { formObject, currentUser });
     AuditLogger.log('Form Submission Failure', currentUser, { error: error.message });
@@ -827,22 +725,18 @@ function processForm(formObject, currentUser, token) {
 
 function createRecord(values) {
   try {
-    let valueRange = Sheets.newValueRange();
+    const valueRange = Sheets.newValueRange();
     valueRange.values = values;
     Sheets.Spreadsheets.Values.append(
       valueRange, 
       Config.SPREADSHEET.ID, 
-      Config.SPREADSHEET.RANGES.DATA, // Now "MAIN!A2:S"
+      Config.SPREADSHEET.RANGES.DATA,
       { valueInputOption: "RAW" }
     );
   } catch (error) {
     ErrorLogger.log('createRecord', error, { values });
-    throw new Error('Failed to save record. Please try again or contact support.');
+    throw new Error('Failed to save record.');
   }
-}
-
-function generateUniqueId() {
-  return Utilities.getUuid();
 }
 
 /**************************
@@ -855,23 +749,17 @@ function addNewCustomerWithCity(region, city, customerName, username, token) {
     }
 
     region = sanitizeInput(region);
-    city = sanitizeInput(city); 
+    city = sanitizeInput(city);
     customerName = sanitizeInput(customerName);
 
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("DATASHEETS");
     
-    // Find first empty row in customers column (C)
-    let customerRow = 2;
-    while(sheet.getRange(customerRow, 3).getValue()) customerRow++;
+    let row = 2;
+    while(sheet.getRange(row, 3).getValue()) row++;
+    // Write to columns A, B, C
+    sheet.getRange(row, 1, 1, 3).setValues([[region, city,customerName]]);
 
-    // Add data to first empty row
-    sheet.getRange(customerRow, 1, 1, 3).setValues([[region, customerName, city]]);
-
-    AuditLogger.log('ADD_CUSTOMER', username, { 
-      region, city, customerName,
-      customerRow
-    });
-
+    AuditLogger.log('ADD_CUSTOMER', username, { region, city, customerName, row });
     return "New customer added successfully!";
   } catch (error) {
     ErrorLogger.log('addNewCustomerWithCity', error, { region, city, customerName, username });
@@ -880,12 +768,13 @@ function addNewCustomerWithCity(region, city, customerName, username, token) {
 }
 
 /**************************
- * EXPORT FUNCTIONS
+ * EXPORT - Existing All Data
  **************************/
 function getSalesPersonData(salesPersonName) {
   try {
     const data = readRecord(Config.SPREADSHEET.RANGES.DATA);
-    return data.filter(row => row[7] === salesPersonName); // Column H (index 7) is Sales Person
+    // row[7] is "Sales Person"
+    return data.filter(row => row[7] === salesPersonName);
   } catch (error) {
     ErrorLogger.log('getSalesPersonData', error, { salesPersonName });
     return [];
@@ -894,43 +783,36 @@ function getSalesPersonData(salesPersonName) {
 
 function exportSalesPersonDataAsCSV(salesPersonName, username, token) {
   try {
-    // Validate session
     if (!sessionManager.validateSession(username, token)) {
       throw new Error('Invalid session');
     }
-    
-    // Rate limiting
-    const currentTime = Math.floor(Date.now() / 1000);
+    // Rate limit
+    const nowSec = Math.floor(Date.now() / 1000);
     if (!userExportCounts[username]) {
-      userExportCounts[username] = { count: 0, windowStart: currentTime };
+      userExportCounts[username] = { count: 0, windowStart: nowSec };
     }
-    
-    const userExport = userExportCounts[username];
-    
-    if ((currentTime - userExport.windowStart) > Config.RATE_LIMITING.EXPORT_WINDOW_SECONDS) {
-      // Reset
-      userExport.count = 0;
-      userExport.windowStart = currentTime;
+    const uExport = userExportCounts[username];
+    if ((nowSec - uExport.windowStart) > Config.RATE_LIMITING.EXPORT_WINDOW_SECONDS) {
+      uExport.count = 0;
+      uExport.windowStart = nowSec;
     }
-    
-    if (userExport.count >= Config.RATE_LIMITING.EXPORT_LIMIT) {
-      throw new Error('Export limit reached. Please try again later.');
+    if (uExport.count >= Config.RATE_LIMITING.EXPORT_LIMIT) {
+      throw new Error('Export limit reached. Try again later.');
     }
-    
-    userExport.count += 1;
-    userExportCounts[username] = userExport;
-    
+    uExport.count++;
+    userExportCounts[username] = uExport;
+
     const spData = getSalesPersonData(salesPersonName);
     if (spData.length === 0) {
       throw new Error('No data available for export.');
     }
 
-    // Build CSV content
+    // Build CSV
     const headers = [
-      "ID", "Date of Visit", "Visit Type", "Region", "City", 
-      "Customer", "Department", "Sales Person", "Product", 
-      "Analyzer Model", "Flags", "Visit Description", "Image URL", 
-      "Submission Time", "Contact Persons", "Next Visit Date"
+      "ID","Date of Visit","Visit Type","Region","City",
+      "Customer","Department","Sales Person","Product",
+      "Analyzer Model","Flags","Visit Description","Image URL",
+      "Submission Time","Contact Persons","Next Visit Date"
     ];
     let csvContent = headers.join(",") + "\n";
     
@@ -942,36 +824,124 @@ function exportSalesPersonDataAsCSV(salesPersonName, username, token) {
       csvContent += formattedRow + "\n";
     });
 
-    // Convert CSV to Blob
-    const blob = Utilities.newBlob(csvContent, 'text/csv', `${salesPersonName}_Data.csv`);
-    const file = DriveApp.createFile(blob);
-    const downloadUrl = file.getDownloadUrl();
-    
+    const file = DriveApp.createFile(
+      Utilities.newBlob(csvContent, 'text/csv', `${salesPersonName}_Data.csv`)
+    );
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    
-    // Schedule deletion after 1 hour
+    const url = file.getDownloadUrl();
     ScriptApp.newTrigger('deleteTempExportFile')
-             .timeBased()
-             .after(60 * 60 * 1000)
-             .create();
-
-    AuditLogger.log('Data Export', username, { salesPersonName, fileName: `${salesPersonName}_Data.csv`, downloadUrl });
-    return downloadUrl;
+      .timeBased().after(60*60*1000).create();
+    return url;
   } catch (error) {
     ErrorLogger.log('exportSalesPersonDataAsCSV', error, { salesPersonName, username });
     throw new Error(error.message);
   }
 }
 
+/**************************
+ * EXPORT - Date Range Filter
+ **************************/
 /**
- * Deletes the temporary export file after a certain period.
+ * Return the rows for user in [fromDate, toDate].
+ * fromDate/toDate are in YYYY-MM-DD format from <input type="date">.
+ * row[1] is your "Date of Visit".
  */
+function getSalesPersonDataWithinRange(salesPersonName, fromDate, toDate) {
+  try {
+    const allData = getSalesPersonData(salesPersonName); 
+    if (!fromDate && !toDate) {
+      // If no range, just return everything
+      return allData;
+    }
+
+    const fromDt = fromDate ? new Date(fromDate + 'T00:00:00') : null;
+    const toDt   = toDate   ? new Date(toDate + 'T23:59:59') : null;
+
+    return allData.filter(row => {
+      const dateStr = row[1]; // Date of Visit in column B
+      if (!dateStr) return false;
+      const vDate = new Date(dateStr);
+      if (isNaN(vDate)) return false;
+      if (fromDt && vDate < fromDt) return false;
+      if (toDt && vDate > toDt) return false;
+      return true;
+    });
+  } catch (error) {
+    ErrorLogger.log('getSalesPersonDataWithinRange', error, { salesPersonName, fromDate, toDate });
+    throw new Error(error.message);
+  }
+}
+
+function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate, username, token) {
+  try {
+    // Validate session
+    if (!sessionManager.validateSession(username, token)) {
+      throw new Error('Invalid session');
+    }
+    // Rate limit
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (!userExportCounts[username]) {
+      userExportCounts[username] = { count: 0, windowStart: nowSec };
+    }
+    const uExport = userExportCounts[username];
+    if ((nowSec - uExport.windowStart) > Config.RATE_LIMITING.EXPORT_WINDOW_SECONDS) {
+      uExport.count = 0;
+      uExport.windowStart = nowSec;
+    }
+    if (uExport.count >= Config.RATE_LIMITING.EXPORT_LIMIT) {
+      throw new Error('Export limit reached. Try again later.');
+    }
+    uExport.count++;
+    userExportCounts[username] = uExport;
+
+    // Filter data
+    const rows = getSalesPersonDataWithinRange(salesPersonName, fromDate, toDate);
+    if (!rows || rows.length === 0) {
+      throw new Error('No data found for the specified range.');
+    }
+
+    // Build CSV
+    const headers = [
+      "ID","Date of Visit","Visit Type","Region","City",
+      "Customer","Department","Sales Person","Product",
+      "Analyzer Model","Flags","Category","Visit Description","Next Visit","Workload",
+      "CONTACT DETAILS","Image Url","Time Stamp"
+    ];
+    let csvContent = headers.join(",") + "\n";
+
+    rows.forEach(function(row) {
+      const escapedRow = row.map(item => {
+        const val = (item || '').replace(/"/g, '""');
+        return /[",]/.test(val) ? `"${val}"` : val;
+      }).join(",");
+      csvContent += escapedRow + "\n";
+    });
+
+    // Create file
+    const fileName = `${salesPersonName}_Data_${fromDate || 'ALL'}_${toDate || 'ALL'}.csv`;
+    const file = DriveApp.createFile(
+      Utilities.newBlob(csvContent, 'text/csv', fileName)
+    );
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    const dlUrl = file.getDownloadUrl();
+    ScriptApp.newTrigger('deleteTempExportFile')
+      .timeBased().after(60*60*1000).create();
+    return dlUrl;
+  } catch (error) {
+    ErrorLogger.log('exportSalesPersonDataWithinRangeAsCSV', error, { salesPersonName, fromDate, toDate, username });
+    throw new Error(error.message);
+  }
+}
+
+/**************************
+ * FILE DELETION TRIGGER
+ **************************/
 function deleteTempExportFile() {
   try {
     const files = DriveApp.getFilesByName(/_Data\.csv$/);
     while (files.hasNext()) {
-      const file = files.next();
-      file.setTrashed(true);
+      files.next().setTrashed(true);
     }
   } catch (error) {
     ErrorLogger.log('deleteTempExportFile', error);
@@ -985,36 +955,31 @@ function sanitizeInput(input) {
   if (typeof input !== 'string') return input;
   return input
     .trim()
-    .replace(/[<>]/g, '') // Remove < and >
-    .replace(/[&]/g, 'and') // Replace &
-    .replace(/['"]/g, '') // Remove quotes
-    .substring(0, 1000); // Limit length
+    .replace(/[<>]/g, '')    // remove < >
+    .replace(/[&]/g, 'and')  // & => 'and'
+    .replace(/['"]/g, '')    // remove quotes
+    .substring(0, 1000);     // limit length
 }
 
 /**************************
- * Helper Function for Pakistan Time
+ * Helper Functions
  **************************/
 function getPakistanDateTime() {
-  // Create date in UTC
-  const date = new Date();
-  
-  // Convert to Pakistan time (UTC+5)
-  const pkTime = new Date(date.getTime() + (5 * 60 * 60 * 1000));
-  
-  return pkTime;
+  // UTC +5
+  return new Date(new Date().getTime() + 5 * 3600 * 1000);
 }
+
+function getCurrentPKTTimeStamp() {
+  return Utilities.formatDate(new Date(), "Asia/Karachi", "MM/dd/yyyy, hh:mm:ss a");
+}
+
 /**
- * Formats the workload data into a single string.
- * @param {Array} workloads - Array of workload objects.
- * @returns {string} - Formatted workload string.
+ * Formats the workload array to a single string in MAIN sheet.
  */
 function formatWorkloadData(workloads) {
-  if (!Array.isArray(workloads) || workloads.length === 0) {
-    return '';
-  }
-  // Example format: A/Competitor1/ModelX/100/50; B/Competitor2/ModelY/200/60
-  return workloads.map((wl, index) => {
-    const letter = String.fromCharCode(65 + index); // A, B, C, ...
+  if (!Array.isArray(workloads) || workloads.length === 0) return '';
+  return workloads.map((wl, idx) => {
+    const letter = String.fromCharCode(65 + idx);
     return `${letter}/${sanitizeInput(wl.competitor)}/${sanitizeInput(wl.competitorModel)}/${sanitizeInput(wl.dailyWorkload)}/${sanitizeInput(wl.perTestCost)}`;
   }).join('; ');
 }

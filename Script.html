@@ -19,6 +19,17 @@
           const successModal = document.getElementById('addCustomerSuccessModal');
           if (successModal) successModal.style.display = 'none';
         });
+
+        const viewReportBtn = document.getElementById('viewReportBtn');
+        if (viewReportBtn) {
+          viewReportBtn.addEventListener('click', viewFilteredData);
+        }
+
+        const downloadReportBtn = document.getElementById('downloadReportBtn');
+        if (downloadReportBtn) {
+          downloadReportBtn.addEventListener('click', downloadFilteredData);
+        }
+        
       }
 
       /***********************************************
@@ -291,6 +302,10 @@
           // Store user info globally
           window.currentUser = response.username;
           window.sessionToken = response.token;
+          const reportingSection = document.getElementById('reportingSection');
+          if (reportingSection) {
+            reportingSection.style.display = 'block';
+          }
         } else {
           // Show invalid login error
           const loginError = document.getElementById('loginError');
@@ -664,10 +679,21 @@ function getContactPersonsData() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+  // 1) Disallow if visitDate is in the future
     if (visitDate && visitDate > today) {
       showCustomError('Visit date cannot be in the future');
       return false;
     }
+
+    // 2) Disallow if visitDate is more than 2 days old
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(today.getDate() - 2); // 2 days in the past
+    if (visitDate && visitDate < twoDaysAgo) {
+      showCustomError('You cannot enter a date more than 2 days old.');
+      return false;
+    }
+
+    // 3) Check nextVisit constraints
     if (nextVisit) {
       if (nextVisit < today) {
         showCustomError('Next visit date cannot be in the past');
@@ -680,7 +706,6 @@ function getContactPersonsData() {
     }
     return true;
   }
-
   /* =====================================
      DROPDOWNS & LOADERS
      ===================================== */
@@ -1406,15 +1431,18 @@ function filterFlagsByAnalyzerModel() {
     updateTimestamp();
     setInterval(updateTimestamp, 1000);
 
+    // 1) Restrict dateOfVisit to [today-2 days ... up to today]
     const dateOfVisit = document.getElementById('dateOfVisit');
     if (dateOfVisit) {
       const today = new Date();
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(today.getDate() - 30);
-      dateOfVisit.max = formatDate(today);
-      dateOfVisit.min = formatDate(thirtyDaysAgo);
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(today.getDate() - 2);
+
+      dateOfVisit.max = formatDate(today);     // cannot go beyond today
+      dateOfVisit.min = formatDate(twoDaysAgo); // cannot go more than 2 days in the past
     }
 
+    // 2) Restrict nextVisit to be at least tomorrow
     const nextVisit = document.getElementById('nextVisit');
     if (nextVisit) {
       const tomorrow = new Date();
@@ -1422,7 +1450,7 @@ function filterFlagsByAnalyzerModel() {
       nextVisit.min = formatDate(tomorrow);
     }
 
-    // Ensure Category is disabled on load
+    // 3) Ensure Category field is disabled on load
     const categoryInput = document.getElementById('Category');
     if (categoryInput) {
       categoryInput.disabled = true;
@@ -1449,6 +1477,91 @@ function getCurrentPKTTimeStamp() {
   // This uses the Asia/Karachi time zone
   return new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: false });
 }
+
+function viewFilteredData() {
+    const fromDate   = document.getElementById('reportFromDate').value;
+    const toDate     = document.getElementById('reportToDate').value;
+    const spinner    = document.getElementById('reportSpinner');
+    const resultsDiv = document.getElementById('reportResults');
+    resultsDiv.innerHTML = '';
+    spinner.style.display = 'inline-block';
+
+    google.script.run
+      .withSuccessHandler(function(rows) {
+        spinner.style.display = 'none';
+        if (!rows || rows.length === 0) {
+          resultsDiv.textContent = 'No data found for the selected range.';
+          return;
+        }
+        // Build a simple table:
+        let html = '<table border="1" style="border-collapse: collapse;"><thead><tr>';
+        html += '<th>Sales Person</th><th>Date</th><th>Call Type</th><th>Region</th><th>City</th>';
+        html += '<th>Customer</th><th>Department</th><th>Product</th><th>Details</th><th>Uploaded</th>';
+        // add more columns if you want
+        html += '</tr></thead><tbody>';
+
+        rows.forEach(row => {
+          html += '<tr>';
+              html += `<td>${row[7] || ''}</td>`;
+              html += `<td>${row[1] || ''}</td>`;
+              html += `<td>${row[2] || ''}</td>`;
+              html += `<td>${row[3] || ''}</td>`;
+              html += `<td>${row[4] || ''}</td>`;
+              html += `<td>${row[5] || ''}</td>`;
+              html += `<td>${row[6] || ''}</td>`;
+              html += `<td>${row[8] || ''}</td>`;
+              html += `<td>${row[12] || ''}</td>`;
+              html += `<td>${row[17] || ''}</td>`;
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        resultsDiv.innerHTML = html;
+      })
+      .withFailureHandler(function(err) {
+        spinner.style.display = 'none';
+        showCustomError('Failed to fetch data. ' + (err.message || ''));
+      })
+      .getSalesPersonDataWithinRange(window.currentUser, fromDate, toDate);
+  }
+
+  function downloadFilteredData() {
+    const fromDate = document.getElementById('reportFromDate').value;
+    const toDate   = document.getElementById('reportToDate').value;
+    const spinner  = document.getElementById('reportSpinner');
+
+    if (!window.currentUser || !window.sessionToken) {
+      showCustomError('You must be logged in to export data.');
+      return;
+    }
+
+    if (!confirm('Download CSV for the selected date range?')) {
+      return;
+    }
+
+    spinner.style.display = 'inline-block';
+    google.script.run
+      .withSuccessHandler(function(downloadUrl) {
+        spinner.style.display = 'none';
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank');
+          showConfirmationMessage('CSV download started.');
+        } else {
+          showCustomError('No data found in that range.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        spinner.style.display = 'none';
+        showCustomError('Export error: ' + (err.message || ''));
+      })
+      .exportSalesPersonDataWithinRangeAsCSV(
+        window.currentUser,  // salesPersonName
+        fromDate,
+        toDate,
+        window.currentUser,  // username
+        window.sessionToken  // token
+      );
+  }
+
   /* =====================================
      EXPORT FUNCTIONS (CSV)
      ===================================== */
