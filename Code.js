@@ -1,5 +1,5 @@
 /**************************
- * CONFIGURATION
+ * CONFIGURATION - code.gs
  **************************/
 const Config = {
   SPREADSHEET: {

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>Sales Data Extraction</title>
+</head>
+<body>
+  <h1>Sales Data Extraction</h1>
+  <button id="exportDataButton">Export My Sales Data</button>
+  
+  <script>
+    document.getElementById('exportDataButton').addEventListener('click', function() {
+      google.script.run
+        .withSuccessHandler(function(downloadUrl) {
+          if (downloadUrl) {
+            // Trigger download
+            window.open(downloadUrl, '_blank');
+            alert('Sales data exported successfully.');
+          } else {
+            alert('No data available for export.');
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('Export Error:', error);
+          alert('Failed to export sales data.');
+        })
+        .exportSalesPersonDataAsCSV();
+    });
+  </script>
+</body>
+</html>

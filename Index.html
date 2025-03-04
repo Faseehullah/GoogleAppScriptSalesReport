@@ -59,9 +59,9 @@
        Main Form Container (Visible After Login)
        ===================================== -->
   <main id="mainForm" style="display:none;">
-    <!-- Add Customer Manually Button -->
-    <button id="addCustomerButton" class="btn btn-secondary">Add New Customer (Manual)</button>
-
+    <!-- Add Customer Manually Button and change Password -->
+    <button id="addCustomerButton" class="btn btn-secondary">Add New Customer</button>
+    <button id="changePasswordButton" class="btn btn-secondary">Change Password</button>
     <!-- =====================================
          Add Customer Manual Form (Hidden by Default)
          ===================================== -->
@@ -340,6 +340,24 @@
         <button id="closeErrorModalBtn" class="btn btn-danger">Close</button>
       </div>
     </div>
+
+    <!-- =====================================
+     Change Password Modal
+     ===================================== -->
+<div id="changePasswordModal" class="modal" aria-modal="true" role="dialog" style="display:none;">
+  <div class="modal-content">
+    <h3>Change Password</h3>
+    <input type="password" id="currentPassword" placeholder="Current Password" aria-label="Current Password" required>
+    <input type="password" id="newPassword" placeholder="New Password" aria-label="New Password" required>
+    <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" aria-label="Confirm New Password" required>
+    <div class="modal-button-group">
+      <button id="saveNewPasswordButton" class="btn btn-secondary">Save</button>
+      <button id="cancelChangePasswordButton" class="btn btn-danger">Cancel</button>
+    </div>
+    <div class="spinner" id="changePassSpinner" style="display:none;"></div>
+  </div>
+</div>
+
 
     <!-- =====================================
          Confirmation Message

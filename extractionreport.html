@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <title>View Extraction Report</title>
+    <style>
+      /* Some basic styling for table */
+      #results table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      #results th, #results td {
+        border: 1px solid #ccc;
+        padding: 8px;
+      }
+      #results th {
+        background-color: #f8f8f8;
+      }
+      .spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #ccc;
+        border-top: 3px solid #004d99;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>View My Sales Data</h1>
+
+    <div>
+      <label for="userInput">Enter or confirm your username:</label>
+      <input type="text" id="userInput" placeholder="e.g. johndoe"/>
+      <button id="viewDataBtn">View Data</button>
+      <div class="spinner" id="loadSpinner"></div>
+    </div>
+
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+      document.getElementById('viewDataBtn').addEventListener('click', function() {
+        const username = document.getElementById('userInput').value.trim();
+        if (!username) {
+          alert('Please enter a username.');
+          return;
+        }
+        const spinner = document.getElementById('loadSpinner');
+        spinner.style.display = 'inline-block'; // show spinner
+
+        google.script.run
+          .withSuccessHandler(function(rows) {
+            spinner.style.display = 'none'; // hide spinner
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+              container.textContent = 'No data found for ' + username;
+              return;
+            }
+//RECORDID 0,VISIT DATE 1,TYPE OF CALL 2,REGION 3,CITY 4,CUSTOMER NAME 5,DEPARTMENT 6,SALE PERSON 7,PRODUCT 8,MODEL 9,FLAG 10,
+//CATEGORY 11,VIST DETAILS 12,NEXT VISIT 13,WORKLOAD 14,CONTACT DETAILS 15,IMAGE URL 16,TIME STAMP 17
+            let html = '<table><thead><tr>';
+            // Hardcode or dynamically create the column headers
+            html += '<th>Sales Person</th>';
+            html += '<th>Date</th>';
+            html += '<th>Call Type</th>';
+            html += '<th>Region</th>';
+            html += '<th>City</th>';
+            html += '<th>Customer Name</th>';
+            html += '<th>Department</th>';
+            html += '<th>Product</th>';
+            html += '<th>Model</th>';
+            html += '<th>Details</th>';
+            html += '<th>Next Visit</th>';
+            html += '<th>Uploaded at</th>';
+            // ... etc. up to however many columns you need
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(row => {
+              html += '<tr>';
+              // row[0] = ID, row[1] = dateOfVisit, etc. 
+              html += `<td>${row[7] || ''}</td>`;
+              html += `<td>${row[1] || ''}</td>`;
+              html += `<td>${row[2] || ''}</td>`;
+              html += `<td>${row[3] || ''}</td>`;
+              html += `<td>${row[4] || ''}</td>`;
+              html += `<td>${row[5] || ''}</td>`;
+              html += `<td>${row[6] || ''}</td>`;
+              html += `<td>${row[8] || ''}</td>`;
+              html += `<td>${row[9] || ''}</td>`;
+              html += `<td>${row[12] || ''}</td>`;
+              html += `<td>${row[17] || ''}</td>`;
+              // ... etc.
+              html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+          })
+          .withFailureHandler(function(error) {
+            spinner.style.display = 'none';
+            console.error(error);
+            alert('Failed to load data: ' + error.message);
+          })
+          .getSalesPersonDataAsJSON(username);
+      });
+    </script>
+  </body>
+</html>
