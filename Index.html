@@ -1,3 +1,4 @@
+<!-- Index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -363,25 +364,98 @@
          Confirmation Message
          ===================================== -->
     <div class="confirmation-message" id="confirmationMessage" style="display:none;">Data successfully submitted!</div>
-    <section id="reportingSection" style="display:none; margin: 30px 0;">
-      <h3>My Reports</h3>
-      <p>Select a date range (optional). Leave blank to get ALL data.</p>
+  
+ <!-- =========================
+     Reporting Section
+     ========================= -->
+<section id="reportingSection" style="display:none;">
+  <h3>My Reports</h3>
+  <p>Select a date range (optional). Leave blank to get ALL data.</p>
 
-      <div class="form-group" style="max-width: 300px;">
-        <label>From Date:</label>
-        <input type="date" id="reportFromDate">
-      </div>
-      <div class="form-group" style="max-width: 300px;">
-        <label>To Date:</label>
-        <input type="date" id="reportToDate">
-      </div>
+  <div class="date-range-container">
+    <div class="form-group">
+      <label for="reportFromDate">From Date:</label>
+      <input type="date" id="reportFromDate">
+    </div>
+    <div class="form-group">
+      <label for="reportToDate">To Date:</label>
+      <input type="date" id="reportToDate">
+    </div>
+  </div>
 
-      <button id="viewReportBtn" class="btn btn-secondary">View Data</button>
-      <button id="downloadReportBtn" class="btn btn-primary">Download CSV</button>
-      <div class="spinner" id="reportSpinner" style="display:none; margin-left:10px;"></div>
+  <div class="report-buttons">
+    <button id="viewReportBtn" class="btn btn-secondary">
+      <span>View Data</span>
+    </button>
+    <button id="downloadReportBtn" class="btn btn-primary">
+      <span>Download CSV</span>
+    </button>
+  </div>
 
-      <div id="reportResults" style="margin-top:20px;"></div>
-    </section>
+  <div class="spinner" id="reportSpinner"></div>
+
+  <!-- Main Report Table with Scrolling -->
+  <div class="report-table-container" style="max-height: 500px; overflow-y: auto;">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Sales Person<div class="resize-handle"></div></th>
+          <th>Date<div class="resize-handle"></div></th>
+          <th>Call Type<div class="resize-handle"></div></th>
+          <th>Region<div class="resize-handle"></div></th>
+          <th>City<div class="resize-handle"></div></th>
+          <th>Customer<div class="resize-handle"></div></th>
+          <th>Department<div class="resize-handle"></div></th>
+          <th>Product<div class="resize-handle"></div></th>
+          <th>Details<div class="resize-handle"></div></th>
+          <th>Uploaded<div class="resize-handle"></div></th>
+        </tr>
+      </thead>
+      <tbody id="reportTableBody">
+        <!-- Table data will be dynamically inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Button to open Full-Screen Modal -->
+  <button class="view-fullscreen btn btn-secondary" onclick="openTableModal()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+    </svg>
+    View Full Screen
+  </button>
+
+  <!-- Full-Screen Modal for Report Table -->
+  <div id="tableModal" class="table-modal">
+    <div class="table-modal-content">
+      <button class="close-modal" onclick="closeTableModal()" style="z-index:9999; font-size:24px;">
+        &times;
+      </button>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Sales Person<div class="resize-handle"></div></th>
+            <th>Date<div class="resize-handle"></div></th>
+            <th>Call Type<div class="resize-handle"></div></th>
+            <th>Region<div class="resize-handle"></div></th>
+            <th>City<div class="resize-handle"></div></th>
+            <th>Customer<div class="resize-handle"></div></th>
+            <th>Department<div class="resize-handle"></div></th>
+            <th>Product<div class="resize-handle"></div></th>
+            <th>Details<div class="resize-handle"></div></th>
+            <th>Uploaded<div class="resize-handle"></div></th>
+          </tr>
+        </thead>
+        <tbody id="modalTableBody">
+          <!-- Table data will be dynamically inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
     
   </main>
 

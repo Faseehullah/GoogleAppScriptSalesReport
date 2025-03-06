@@ -177,7 +177,6 @@
     height: 100%;
     background-color: rgba(0,0,0,0.5);
     z-index: 10000;
-     /* display: flex; */
     justify-content: center;
     align-items: center;
     padding: 15px;
@@ -540,19 +539,20 @@
     from { opacity: 1; transform: translateY(0); }
     to { opacity: 0; transform: translateY(-20px); }
   }
+
   /* =====================================
      collapsible.collapsed
      ===================================== */
+  .collapsible.collapsed {
+    display: none;
+    transition: max-height 0.3s ease-out;
+  }
 
-.collapsible.collapsed {
-  display: none;
-  transition: max-height 0.3s ease-out;
-}
+  .collapsible.expanded {
+    display: block;
+    transition: max-height 0.3s ease-in;
+  }
 
-.collapsible.expanded {
-  display: block;
-  transition: max-height 0.3s ease-in;
-}
   /* =====================================
      Footer Styling
      ===================================== */
@@ -627,6 +627,245 @@
       width: 90%;
       right: 5%;
       top: 10px;
+    }
+  }
+
+  /* =====================================
+     Reporting Section Base Styles
+     ===================================== */
+  #reportingSection {
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 25px;
+    margin: 30px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 800px;
+  }
+
+  #reportingSection h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  #reportingSection p {
+    color: var(--gray-600);
+    margin-bottom: 25px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Date Range Container */
+  .date-range-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .date-range-container .form-group {
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 15px;
+  }
+
+  /* Date Input Styling */
+  #reportingSection input[type="date"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: var(--white);
+    transition: all 0.3s ease;
+  }
+
+  #reportingSection input[type="date"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0,77,153,0.1);
+    outline: none;
+  }
+
+  /* Button Container */
+  .report-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+
+  /* Button Styles */
+  #reportingSection .btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Results Section */
+  #reportResults {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: var(--gray-100);
+    border-radius: 8px;
+    min-height: 100px;
+  }
+
+  /* Spinner Enhancement */
+  #reportSpinner {
+    margin: 20px auto;
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Responsive Design for Reporting Section */
+  @media (max-width: 768px) {
+    #reportingSection {
+      padding: 20px 15px;
+      margin: 20px 15px;
+    }
+
+    #reportingSection h3 {
+      font-size: 20px;
+    }
+
+    .date-range-container {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .date-range-container .form-group {
+      width: 100%;
+      min-width: unset;
+    }
+
+    #reportingSection input[type="date"] {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .report-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    #reportingSection .btn {
+      width: 100%;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+
+    #reportResults {
+      padding: 15px;
+      margin-top: 20px;
+    }
+  }
+
+  /* =====================================
+   1) Improve the layout of the .report-table
+   ===================================== */
+.report-table {
+  width: 100%;
+  border-collapse: collapse; /* merges adjacent borders */
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #ccc;    /* add borders around cells */
+  padding: 8px;
+  vertical-align: top;       /* align text to top */
+  text-align: left;          /* or center if you prefer */
+}
+
+.report-table th {
+  background: #f2f2f2;       /* light gray background */
+  white-space: nowrap;       /* keep column headers on one line */
+  font-weight: bold;
+}
+
+/* =====================================
+   2) Full-Screen Modal for the Report Table
+   ===================================== */
+.table-modal {
+  display: none;                /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);  /* semi-transparent backdrop */
+  z-index: 9999;                /* above everything */
+  align-items: center;          /* center content vertically (flex) */
+  justify-content: center;      /* center content horizontally (flex) */
+  flex-direction: column;       /* stack items if needed */
+}
+
+.table-modal-content {
+  background: #fff;
+  position: relative;           /* for the close button */
+  max-height: 90vh;             /* keep table scrollable if too tall */
+  width: 90%;                   /* or 80%, or a fixed px width */
+  overflow: auto;               /* scroll if content is large */
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Close Button */
+.close-modal {
+  position: absolute;
+  top: 10px; 
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.resize-handle {
+  display: inline-block;
+  width: 8px;              /* bigger than 5px */
+  background: rgba(0,0,0,0.05); /* subtle background so user can see it */
+  cursor: col-resize;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 1;
+}
+
+
+/* Ensure header cells are positioned relative */
+.report-table th {
+  position: relative;
+}
+
+
+  /* Dark Mode Support for Reporting Section */
+  @media (prefers-color-scheme: dark) {
+    #reportingSection {
+      background-color: #1a1a1a;
+    }
+
+    #reportingSection h3 {
+      color: #89CFF0;
+    }
+
+    #reportingSection p {
+      color: #cccccc;
+    }
+
+    #reportingSection input[type="date"] {
+      background-color: #2d2d2d;
+      color: #ffffff;
+      border-color: #404040;
+    }
+
+    #reportResults {
+      background-color: #2d2d2d;
+      color: #ffffff;
     }
   }
 </style>

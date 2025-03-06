@@ -1,14 +1,17 @@
 /**************************
- * CONFIGURATION - code.gs
+ * Code.gs
+ **************************/
+/**************************
+ * CONFIGURATION
  **************************/
 const Config = {
   SPREADSHEET: {
-    ID: "1mypSn1d0lZtM_Aww0EWb2Ovc__HRdFsvJ06HVhYUvls", // <-- Update this to your actual Spreadsheet ID
+    ID: "1mypSn1d0lZtM_Aww0EWb2Ovc__HRdFsvJ06HVhYUvls", 
     RANGES: {
       // Main data is appended here
       DATA: "MAIN!A2:S",
-      // The credentials range now includes 4 columns: Username, HashedPassword, AvatarURL, Email
-      CREDENTIALS: "DATASHEETS!T2:W",
+      // The credentials range now includes 4 columns: Username, HashedPassword, AvatarURL, Email , role
+      CREDENTIALS: "DATASHEETS!T2:X",
       // One row per contact (ID, ADDED BY, CUSTOMER, PERSON NAME, DESIGNATION, CONTACT, TIME STAMP)
       CONTACTS: "CONTACTS!A2:G",
       // One row per new workload (ID, ADDED BY, CUSTOMER, Competitor, Competitor Model, Daily Work Load, Estimated Per Test Cost, TIME STAMP)
@@ -28,7 +31,7 @@ const Config = {
   SECURITY: {
     SESSION_DURATION_SECONDS: 600, // 10 minutes
     MAX_LOGIN_ATTEMPTS: 5,
-    LOGIN_TIMEOUT_SECONDS: 300 // 5 minutes
+    LOGIN_TIMEOUT_SECONDS: 600 // 5 minutes
   },
   RATE_LIMITING: {
     EXPORT_LIMIT: 10, // Max exports per user
@@ -95,7 +98,7 @@ class ErrorLogger {
    */
   static log(functionName, error, additionalInfo = {}) {
     const errorLog = [
-      getPakistanDateTime().toISOString(),
+      getCurrentPKTTimeStamp(),,
       functionName,
       error.message || error,
       error.stack || '',
@@ -130,7 +133,7 @@ class AuditLogger {
   static log(action, username, details = {}) {
     try {
       const auditLog = [
-        getPakistanDateTime().toISOString(),
+        getCurrentPKTTimeStamp(),,
         username,
         action,
         JSON.stringify(details)
@@ -194,31 +197,39 @@ function checkLogin(username, password) {
     const foundUser = data.find(row => row[0] === username && row[1] === hashedPassword);
     
     if (foundUser) {
+      // Determine role based on the value in the role column (assume "1" for Admin, "2" for User)
+      let role = "";
+      if (foundUser[4] === "1") {
+        role = "Admin";
+      } else if (foundUser[4] === "2") {
+        role = "User";
+      }
+      
       // Successful login
       const sessionToken = sessionManager.startSession(username);
       let avatarLink = (foundUser[2] || "").trim();
       
-      // Reset login attempts
-      if (userLoginAttempts[username]) {
-        delete userLoginAttempts[username];
-      }
-      AuditLogger.log('Successful Login', username, { timestamp: getPakistanDateTime().toISOString() });
+      // Reset login attempts for the user
+      delete userLoginAttempts[username];
+      AuditLogger.log('Successful Login', username, { timestamp: getCurrentPKTTimeStamp(), });
+      
       return {
         success: true,
         message: "Login successful",
         token: sessionToken,
         username: username,
-        avatarUrl: avatarLink
+        avatarUrl: avatarLink,
+        role: role
       };
     } else {
-      // Track failed attempts
+      // Track failed login attempt
       if (!userLoginAttempts[username]) {
         userLoginAttempts[username] = { attempts: 1, lastAttempt: currentTime };
       } else {
-        userLoginAttempts[username].attempts += 1;
+        userLoginAttempts[username].attempts++;
         userLoginAttempts[username].lastAttempt = currentTime;
       }
-      AuditLogger.log('Failed Login Attempt', username, { timestamp: getPakistanDateTime().toISOString() });
+      AuditLogger.log('Failed Login Attempt', username, { timestamp: getCurrentPKTTimeStamp(), });
       return { success: false, message: "Invalid username or password" };
     }
   } catch (error) {
@@ -235,6 +246,49 @@ function hashPassword(password) {
       return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     })
     .join('');
+}
+/**************************
+ * "CHANGE PASSWORD"
+ **************************/
+function changePassword(username, oldPassword, newPassword, token) {
+  try {
+    // Validate the session first
+    if (!sessionManager.validateSession(username, token)) {
+      throw new Error('Invalid session');
+    }
+    
+    // Hash the old password provided by the user
+    const oldHashed = hashPassword(oldPassword);
+    
+    // Read all credentials
+    const data = readRecord(Config.SPREADSHEET.RANGES.CREDENTIALS);
+    // data[i] -> [ username, hashedPwd, avatarUrl, email, role ]
+    const userIndex = data.findIndex(row => row[0] === username);
+    if (userIndex === -1) {
+      throw new Error('User not found');
+    }
+    
+    // Verify that the current password is correct
+    if (data[userIndex][1] !== oldHashed) {
+      throw new Error('Current password is incorrect');
+    }
+    
+    // Hash the new password
+    const newHashed = hashPassword(newPassword);
+    
+    // Update the spreadsheet with the new hashed password.
+    // Assuming that the credentials range starts at row 2, and that the hashed password is in the second column of your range.
+    const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("DATASHEETS");
+    const rowToUpdate = userIndex + 2; // because row 1 is header, row 2 is first record.
+    const hashedPasswordColumn = 21;  // Column U (if T=20, then U=21) in your spreadsheet.
+    sheet.getRange(rowToUpdate, hashedPasswordColumn).setValue(newHashed);
+    
+    AuditLogger.log('Password Change', username, { timestamp: getCurrentPKTTimeStamp(), });
+    return { success: true, message: "Password changed successfully." };
+  } catch (error) {
+    ErrorLogger.log('changePassword', error, { username });
+    return { success: false, message: error.message };
+  }
 }
 
 /**************************
@@ -489,16 +543,27 @@ function createMultipleWorkloadRecords(id, customer, workloads, username) {
     const sheet = SpreadsheetApp.openById(Config.SPREADSHEET.ID).getSheetByName("WORKLOAD");
     // Columns: A: ID, B: ADDED BY, C: CUSTOMER, D: Competitor, E: CompetitorModel, F: DailyWorkload, G: PerTestCost, H:Timestamp
 
-    const rows = workloads.map(wl => [
-      id,
-      username,
-      customer || "",
-      wl.competitor || "",
-      wl.competitorModel || "",
-      wl.dailyWorkload || "",
-      wl.perTestCost || "",
-      getPakistanDateTime().toISOString()
-    ]);
+    // Filter out workload items that are entirely empty:
+const validWorkloads = workloads.filter(wl => {
+  return (wl.competitor && wl.competitor.trim()) ||
+         (wl.competitorModel && wl.competitorModel.trim()) ||
+         (wl.dailyWorkload && wl.dailyWorkload.toString().trim()) ||
+         (wl.perTestCost && wl.perTestCost.toString().trim());
+});
+
+if (!Array.isArray(validWorkloads) || validWorkloads.length === 0) return;
+
+const rows = validWorkloads.map(wl => [
+  id,
+  username,
+  customer || "",
+  wl.competitor || "",
+  wl.competitorModel || "",
+  wl.dailyWorkload || "",
+  wl.perTestCost || "",
+  getCurrentPKTTimeStamp(),
+]);
+
 
     sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
   } catch (error) {
@@ -545,13 +610,13 @@ function createContactsRecords(id, customerName, contactPersons, username) {
           person.name.toUpperCase(),
           person.post.toUpperCase(),
           person.number,
-          getPakistanDateTime().toISOString()
+          getCurrentPKTTimeStamp(),
         ]);
       } else {
         // Update existing record's contact number + timestamp
         const rowIndex = existingData.indexOf(duplicate) + 2; 
         sheet.getRange(rowIndex, 6).setValue(person.number);
-        sheet.getRange(rowIndex, 7).setValue(getPakistanDateTime().toISOString());
+        sheet.getRange(rowIndex, 7).setValue(getCurrentPKTTimeStamp(),);
 
         AuditLogger.log('Updated Existing Contact', username, { 
           id, username, customerName, 
@@ -770,17 +835,20 @@ function addNewCustomerWithCity(region, city, customerName, username, token) {
 /**************************
  * EXPORT - Existing All Data
  **************************/
-function getSalesPersonData(salesPersonName) {
+function getSalesPersonData(salesPersonName, role) {
   try {
     const data = readRecord(Config.SPREADSHEET.RANGES.DATA);
-    // row[7] is "Sales Person"
-    return data.filter(row => row[7] === salesPersonName);
+    if (role === "Admin") {
+      return data; // Admin sees all data
+    } else {
+      // Regular user sees only their own data (column 8 is Sales Person)
+      return data.filter(row => row[7] === salesPersonName);
+    }
   } catch (error) {
-    ErrorLogger.log('getSalesPersonData', error, { salesPersonName });
+    ErrorLogger.log('getSalesPersonData', error, { salesPersonName, role });
     return [];
   }
 }
-
 function exportSalesPersonDataAsCSV(salesPersonName, username, token) {
   try {
     if (!sessionManager.validateSession(username, token)) {
@@ -846,19 +914,18 @@ function exportSalesPersonDataAsCSV(salesPersonName, username, token) {
  * fromDate/toDate are in YYYY-MM-DD format from <input type="date">.
  * row[1] is your "Date of Visit".
  */
-function getSalesPersonDataWithinRange(salesPersonName, fromDate, toDate) {
+// Updated getSalesPersonDataWithinRange
+function getSalesPersonDataWithinRange(salesPersonName, role, fromDate, toDate) {
   try {
-    const allData = getSalesPersonData(salesPersonName); 
+    const allData = getSalesPersonData(salesPersonName, role); 
     if (!fromDate && !toDate) {
-      // If no range, just return everything
+      //if no range, then return all data
       return allData;
     }
-
     const fromDt = fromDate ? new Date(fromDate + 'T00:00:00') : null;
     const toDt   = toDate   ? new Date(toDate + 'T23:59:59') : null;
-
     return allData.filter(row => {
-      const dateStr = row[1]; // Date of Visit in column B
+      const dateStr = row[1];  // Column B of Visit Dates
       if (!dateStr) return false;
       const vDate = new Date(dateStr);
       if (isNaN(vDate)) return false;
@@ -867,7 +934,7 @@ function getSalesPersonDataWithinRange(salesPersonName, fromDate, toDate) {
       return true;
     });
   } catch (error) {
-    ErrorLogger.log('getSalesPersonDataWithinRange', error, { salesPersonName, fromDate, toDate });
+    ErrorLogger.log('getSalesPersonDataWithinRange', error, { salesPersonName, role, fromDate, toDate });
     throw new Error(error.message);
   }
 }
@@ -878,6 +945,7 @@ function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate
     if (!sessionManager.validateSession(username, token)) {
       throw new Error('Invalid session');
     }
+    
     // Rate limit
     const nowSec = Math.floor(Date.now() / 1000);
     if (!userExportCounts[username]) {
@@ -894,18 +962,18 @@ function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate
     uExport.count++;
     userExportCounts[username] = uExport;
 
-    // Filter data
-    const rows = getSalesPersonDataWithinRange(salesPersonName, fromDate, toDate);
+    // Filter data using the current user's role
+    const rows = getSalesPersonDataWithinRange(salesPersonName, window.currentUserRole, fromDate, toDate);
     if (!rows || rows.length === 0) {
       throw new Error('No data found for the specified range.');
     }
 
     // Build CSV
     const headers = [
-      "ID","Date of Visit","Visit Type","Region","City",
-      "Customer","Department","Sales Person","Product",
-      "Analyzer Model","Flags","Category","Visit Description","Next Visit","Workload",
-      "CONTACT DETAILS","Image Url","Time Stamp"
+      "ID", "Date of Visit", "Visit Type", "Region", "City",
+      "Customer", "Department", "Sales Person", "Product",
+      "Analyzer Model", "Flags", "Category", "Visit Description", "Next Visit", "Workload",
+      "CONTACT DETAILS", "Image Url", "Time Stamp"
     ];
     let csvContent = headers.join(",") + "\n";
 
@@ -964,11 +1032,6 @@ function sanitizeInput(input) {
 /**************************
  * Helper Functions
  **************************/
-function getPakistanDateTime() {
-  // UTC +5
-  return new Date(new Date().getTime() + 5 * 3600 * 1000);
-}
-
 function getCurrentPKTTimeStamp() {
   return Utilities.formatDate(new Date(), "Asia/Karachi", "MM/dd/yyyy, hh:mm:ss a");
 }

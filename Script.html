@@ -1,385 +1,263 @@
+
 <script>
-  /* =====================================
-     Global Variables -- Script.html
-     ===================================== */
-  let userAvatarUrl = null;         // Stores the user's avatar URL after login
-  window.currentUser = null;        // Stores the current user's username
-  window.sessionToken = null;       // Stores the session token
-  window.existingContactsData = []; // Stores existing contacts (from server)
+  /* =========================================================
+   * Script.html
+   * ========================================================= */
+  /* =========================================================
+   * 1) GLOBAL VARIABLES - Script.html
+   * ========================================================= */
+  let userAvatarUrl = null;         // User avatar URL after login
+  window.currentUser = null;        // Current user's username
+  window.sessionToken = null;       // Session token from server
+  window.currentUserRole = null;    // Current user's role (e.g., admin, user)
+  window.existingContactsData = []; // Array holding existing contacts from server
   
-  /* =====================================
-     Event Listeners Binding on DOM Content Loaded
-     ===================================== */
+  /* =========================================================
+   * 2) DOM CONTENT LOADED EVENT & INITIAL SETUP
+   * ========================================================= */
   document.addEventListener('DOMContentLoaded', function() {
-
-      // 1) Close "Customer successfully added!" modal
-      const closeAddCustomerModalBtn = document.getElementById('closeAddCustomerModalBtn');
-      if (closeAddCustomerModalBtn) {
-        closeAddCustomerModalBtn.addEventListener('click', function() {
-          const successModal = document.getElementById('addCustomerSuccessModal');
-          if (successModal) successModal.style.display = 'none';
-        });
-
-        const viewReportBtn = document.getElementById('viewReportBtn');
-        if (viewReportBtn) {
-          viewReportBtn.addEventListener('click', viewFilteredData);
+    // --- General Event Listeners ---
+    const closeAddCustomerModalBtn = document.getElementById('closeAddCustomerModalBtn');
+    if (closeAddCustomerModalBtn) {
+      closeAddCustomerModalBtn.addEventListener('click', function() {
+        const successModal = document.getElementById('addCustomerSuccessModal');
+        if (successModal) successModal.style.display = 'none';
+      });
+    }
+  
+    // --- Reporting Section Buttons ---
+    const viewReportBtn = document.getElementById('viewReportBtn');
+    if (viewReportBtn) {
+      viewReportBtn.addEventListener('click', viewFilteredData);
+    }
+    const downloadReportBtn = document.getElementById('downloadReportBtn');
+    if (downloadReportBtn) {
+      downloadReportBtn.addEventListener('click', downloadFilteredData);
+    }
+  
+    // --- Change Password Modal Handlers ---
+    const changePassBtn = document.getElementById('changePasswordButton');
+    if (changePassBtn) {
+      changePassBtn.addEventListener('click', function() {
+        const changeModal = document.getElementById('changePasswordModal');
+        if (changeModal) changeModal.style.display = 'flex';
+      });
+    }
+    document.getElementById('saveNewPasswordButton').addEventListener('click', saveNewPassword);
+    document.getElementById('cancelChangePasswordButton').addEventListener('click', function() {
+      closeModal('changePasswordModal');
+      clearPasswordFields();
+    });
+  
+    // --- Customer/Contacts/Workload Setup ---
+    const addCustomerBtn = document.getElementById('addCustomerButton');
+    if (addCustomerBtn) addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
+    const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
+    if (saveCustomerBtn) saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
+    const cancelAddCustomerBtn = document.getElementById('cancelAddCustomerButton');
+    if (cancelAddCustomerBtn) cancelAddCustomerBtn.addEventListener('click', resetAddCustomerForm);
+  
+    // Manual contact person events
+    const addContactPersonBtn = document.getElementById('addContactPersonBtn');
+    if (addContactPersonBtn) addContactPersonBtn.addEventListener('click', () => addContactPerson());
+    const manualContactsContainer = document.getElementById('manualContactsContainer');
+    if (manualContactsContainer) {
+      manualContactsContainer.addEventListener('click', function(event) {
+        if (event.target && event.target.classList.contains('remove-contact')) {
+          removeContactPerson(event.target);
         }
-
-        const downloadReportBtn = document.getElementById('downloadReportBtn');
-        if (downloadReportBtn) {
-          downloadReportBtn.addEventListener('click', downloadFilteredData);
+      });
+    }
+  
+    // Workload item events
+    const addWorkloadBtn = document.getElementById('addWorkloadBtn');
+    if (addWorkloadBtn) addWorkloadBtn.addEventListener('click', addWorkloadItem);
+    const workloadContainer = document.getElementById('workloadContainer');
+    if (workloadContainer) {
+      workloadContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-workload')) {
+          removeWorkloadItem(e.target);
         }
-        
-      }
-
-      /***********************************************
-       * NEW CUSTOMER ADDITION (BUTTON & FORM)
-       ***********************************************/
-      const addCustomerBtn = document.getElementById('addCustomerButton');
-      if (addCustomerBtn) {
-        addCustomerBtn.addEventListener('click', toggleAddCustomerForm);
-      }
-
-      const saveCustomerBtn = document.getElementById('saveNewCustomerButton');
-      if (saveCustomerBtn) {
-        saveCustomerBtn.addEventListener('click', submitAddCustomerForm);
-      }
-
-      const cancelAddCustomerBtn = document.getElementById('cancelAddCustomerButton');
-      if (cancelAddCustomerBtn) {
-        cancelAddCustomerBtn.addEventListener('click', resetAddCustomerForm);
-      }
-
-      /***********************************************
-       * MANUAL CONTACTS (BUTTON TO ADD MORE)
-       ***********************************************/
-      const addContactPersonBtn = document.getElementById('addContactPersonBtn');
-      if (addContactPersonBtn) {
-        addContactPersonBtn.addEventListener('click', function() {
-          addContactPerson(); // Add a new manual contact person
-        });
-      }
-
-      // Event delegation for removing manual contacts
-      const manualContactsContainer = document.getElementById('manualContactsContainer');
-      if (manualContactsContainer) {
-        manualContactsContainer.addEventListener('click', function(event) {
-          if (event.target && event.target.classList.contains('remove-contact')) {
-            removeContactPerson(event.target);
-          }
-        });
-      }
-
-      /***********************************************
-       * WORKLOAD LAYOUT
-       ***********************************************/
-      const addWorkloadBtn = document.getElementById('addWorkloadBtn');
-      if (addWorkloadBtn) {
-        addWorkloadBtn.addEventListener('click', addWorkloadItem);
-      }
-
-      const workloadContainer = document.getElementById('workloadContainer');
-      if (workloadContainer) {
-        workloadContainer.addEventListener('click', function(e) {
-          if (e.target && e.target.classList.contains('remove-workload')) {
-            removeWorkloadItem(e.target);
-          }
-        });
-      }
-
-      /***********************************************
-       * BUTTONS & MODALS (ADD MORE, CLOSE ERROR, ETC.)
-       ***********************************************/
-      const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
-      const noAddMoreBtn = document.getElementById('noAddMoreBtn');
-      if (yesAddMoreBtn) {
-        yesAddMoreBtn.addEventListener('click', function() {
-          handleModalResponse(true);
-        });
-      }
-      if (noAddMoreBtn) {
-        noAddMoreBtn.addEventListener('click', function() {
-          handleModalResponse(false);
-        });
-      }
-
-      const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
-      if (closeErrorModalBtn) {
-        closeErrorModalBtn.addEventListener('click', closeErrorModal);
-      }
-
-      /***********************************************
-       * LOGIN & FORGOT PASSWORD
-       ***********************************************/
-      const loginBtn = document.getElementById('loginButton');
-      if (loginBtn) {
-        loginBtn.addEventListener('click', login);
-      }
-
-      const forgotLink = document.getElementById('forgotPasswordLink');
-      const forgotPasswordModal = document.getElementById('forgotPasswordModal');
-      const resetButton = document.getElementById('resetPasswordButton');
-      const cancelButton = document.getElementById('cancelResetButton');
-
-      if (forgotLink) {
-        forgotLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          if (forgotPasswordModal) {
-            forgotPasswordModal.style.display = 'flex';
-          }
-        });
-      }
-      if (resetButton) {
-        resetButton.addEventListener('click', function() {
-          const userInput = document.getElementById('resetEmailOrUsername').value.trim();
-          if (!userInput) {
-            showCustomError('Please enter your email or username.');
-            return;
-          }
-          const resetSpinner = document.getElementById('resetSpinner');
-          if (resetSpinner) {
-            resetSpinner.style.display = 'inline-block';
-          }
-          google.script.run
-            .withSuccessHandler(function(response) {
-              if (resetSpinner) {
-                resetSpinner.style.display = 'none';
-              }
-              if (response.success) {
-                alert(response.message);
-                if (forgotPasswordModal) {
-                  forgotPasswordModal.style.display = 'none';
-                }
-              } else {
-                showCustomError(response.message);
-              }
-            })
-            .withFailureHandler(function(error) {
-              if (resetSpinner) {
-                resetSpinner.style.display = 'none';
-              }
-              showCustomError('Error sending reset request.');
-            })
-            .forgotPassword(userInput);
-        });
-      }
-      if (cancelButton) {
-        cancelButton.addEventListener('click', function() {
-          if (forgotPasswordModal) {
-            forgotPasswordModal.style.display = 'none';
-          }
-        });
-      }
-
-      /***********************************************
-       * EXPORT DATA (IF BUTTON EXISTS)
-       ***********************************************/
-      const exportBtn = document.getElementById('exportDataButton');
-      if (exportBtn) {
-        exportBtn.addEventListener('click', exportSalesData);
-      }
-
-      /***********************************************
-       * CHANGE CUSTOMER BUTTON (IF YOU WANT TO ALLOW RE-SELECTION)
-       ***********************************************/
-      const changeCustomerBtn = document.getElementById('changeCustomerBtn');
-      if (changeCustomerBtn) {
-        changeCustomerBtn.addEventListener('click', function() {
-          // Re-enable the dropdown
-          const customerSelect = document.getElementById('Customer');
-          if (customerSelect) {
-            customerSelect.disabled = false;
-          }
-
-          // Hide the button
-          changeCustomerBtn.style.display = 'none';
-
-          // Optionally hide any label that shows the selected customer
-          const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
-          if (selectedCustomerLabel) {
-            selectedCustomerLabel.style.display = 'none';
-            selectedCustomerLabel.textContent = '';
-          }
-
-          // Reset existing contacts
-          resetContactsSection();
-        });
-      }
-
-      /***********************************************
-       * TOGGLE EXISTING CONTACTS SECTION
-       ***********************************************/
-      const toggleExistingContactsBtn = document.getElementById('toggleExistingContactsBtn');
-      const existingContactsCollapsible = document.getElementById('existingContactsCollapsible');
-      if (toggleExistingContactsBtn && existingContactsCollapsible) {
-        toggleExistingContactsBtn.addEventListener('click', function() {
-          if (existingContactsCollapsible.classList.contains('expanded')) {
-            existingContactsCollapsible.classList.remove('expanded');
-            existingContactsCollapsible.classList.add('collapsed');
-            toggleExistingContactsBtn.textContent = 'Show Existing Contacts';
-          } else {
-            existingContactsCollapsible.classList.remove('collapsed');
-            existingContactsCollapsible.classList.add('expanded');
-            toggleExistingContactsBtn.textContent = 'Hide Existing Contacts';
-          }
-        });
-      }
+      });
+    }
+  
+    // Modal response buttons
+    const yesAddMoreBtn = document.getElementById('yesAddMoreBtn');
+    if (yesAddMoreBtn) yesAddMoreBtn.addEventListener('click', () => handleModalResponse(true));
+    const noAddMoreBtn = document.getElementById('noAddMoreBtn');
+    if (noAddMoreBtn) noAddMoreBtn.addEventListener('click', () => handleModalResponse(false));
+  
+    // Error modal close
+    const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
+    if (closeErrorModalBtn) closeErrorModalBtn.addEventListener('click', closeErrorModal);
+  
+    // --- Login & Forgot Password Setup ---
+    const loginBtn = document.getElementById('loginButton');
+    if (loginBtn) loginBtn.addEventListener('click', login);
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+    const resetButton = document.getElementById('resetPasswordButton');
+    const cancelButton = document.getElementById('cancelResetButton');
+    if (forgotLink) {
+      forgotLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (forgotPasswordModal) forgotPasswordModal.style.display = 'flex';
+      });
+    }
+    if (resetButton) {
+      resetButton.addEventListener('click', resetForgotPassword);
+    }
+    if (cancelButton) {
+      cancelButton.addEventListener('click', function() {
+        if (forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+      });
+    }
+  
+    // --- Export Button ---
+    const exportBtn = document.getElementById('exportDataButton');
+    if (exportBtn) exportBtn.addEventListener('click', exportSalesData);
+  
+    // --- Change Customer ---
+    const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+    if (changeCustomerBtn) {
+      changeCustomerBtn.addEventListener('click', function() {
+        const customerSelect = document.getElementById('Customer');
+        if (customerSelect) customerSelect.disabled = false;
+        customerSelect.value = ""; // Clear the selected value so user can choose again.
+        changeCustomerBtn.style.display = 'none';
+        const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
+        if (selectedCustomerLabel) {
+          selectedCustomerLabel.style.display = 'none';
+          selectedCustomerLabel.textContent = '';
+        }
+        resetContactsSection();
+      });
+    }
+  
+    // --- Toggle Existing Contacts ---
+    const toggleExistingContactsBtn = document.getElementById('toggleExistingContactsBtn');
+    const existingContactsCollapsible = document.getElementById('existingContactsCollapsible');
+    if (toggleExistingContactsBtn && existingContactsCollapsible) {
+      toggleExistingContactsBtn.addEventListener('click', function() {
+        if (existingContactsCollapsible.classList.contains('expanded')) {
+          existingContactsCollapsible.classList.remove('expanded');
+          existingContactsCollapsible.classList.add('collapsed');
+          toggleExistingContactsBtn.textContent = 'Show Existing Contacts';
+        } else {
+          existingContactsCollapsible.classList.remove('collapsed');
+          existingContactsCollapsible.classList.add('expanded');
+          toggleExistingContactsBtn.textContent = 'Hide Existing Contacts';
+        }
+      });
+    }
+  
+    // --- (Additional setup as needed) ---
   });
-
-  /* =====================================
-     LOGIN FUNCTIONALITY
-     ===================================== */
+  
+  /* =========================================================
+   * 3) LOGIN FUNCTIONALITY
+   * ========================================================= */
   function login() {
     const loginSpinner = document.getElementById('loginSpinner');
-    if (loginSpinner) {
-      loginSpinner.style.display = 'inline-block';
-    }
-
+    if (loginSpinner) loginSpinner.style.display = 'inline-block';
+  
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-
-    // Basic Validation
+  
     if (!username || !password) {
       showCustomError('Please enter both username and password.');
-      if (loginSpinner) {
-        loginSpinner.style.display = 'none';
-      }
+      if (loginSpinner) loginSpinner.style.display = 'none';
       return;
     }
-
-    // Server-side checkLogin
+  
     google.script.run
       .withSuccessHandler(function(response) {
-        if (loginSpinner) {
-          loginSpinner.style.display = 'none';
-        }
+        if (loginSpinner) loginSpinner.style.display = 'none';
         if (response.success) {
-          // Hide login, show main form
-          const loginForm = document.getElementById('loginForm');
-          const mainForm = document.getElementById('mainForm');
-          if (loginForm) {
-            loginForm.style.display = 'none';
-          }
-          if (mainForm) {
-            mainForm.style.display = 'block';
-          }
-          const extractionLinkAfterLogin = document.getElementById('extractionLinkAfterLogin');
-          if (extractionLinkAfterLogin) {
-            extractionLinkAfterLogin.style.display = 'block';
-          }
-
-          // Hide extraction link before login
-          const extractionLinkBeforeLogin = document.getElementById('extractionLinkBeforeLogin');
-          if (extractionLinkBeforeLogin) {
-            extractionLinkBeforeLogin.style.display = 'none';
-          }
-
-          // Populate dropdowns
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('mainForm').style.display = 'block';
+  
           populateDropdowns();
-
-          // Show welcome container
-          const welcomeContainer = document.getElementById('welcomeContainer');
-          if (welcomeContainer) {
-            welcomeContainer.style.display = 'block';
-          }
-
-          // Update welcome message
+          document.getElementById('welcomeContainer').style.display = 'block';
+  
           const welcomeMsg = document.getElementById('welcomeMessage');
           if (welcomeMsg) {
-            welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> - For Sales Report Form`;
+            welcomeMsg.innerHTML = `Welcome, <span style="color:#0072C6">${response.username}</span> (<strong>${response.role}</strong>) - For Sales Report Form`;
           }
-
-          // If there's an avatar
+  
           if (response.avatarUrl) {
             const avatarImg = document.getElementById('salesPersonAvatar');
             if (avatarImg) {
-              let cleanUrl = response.avatarUrl.trim();
-              avatarImg.src = cleanUrl;
+              avatarImg.src = response.avatarUrl.trim();
               avatarImg.style.display = 'inline';
             }
           }
-
-          // Store user info globally
+  
           window.currentUser = response.username;
           window.sessionToken = response.token;
+          window.currentUserRole = response.role;
+          
           const reportingSection = document.getElementById('reportingSection');
-          if (reportingSection) {
-            reportingSection.style.display = 'block';
-          }
+          if (reportingSection) reportingSection.style.display = 'block';
         } else {
-          // Show invalid login error
           const loginError = document.getElementById('loginError');
-          if (loginError) {
-            loginError.style.display = 'block';
-          }
+          if (loginError) loginError.style.display = 'block';
         }
       })
       .withFailureHandler(function(error) {
         console.error("Error during login:", error);
-        if (loginSpinner) {
-          loginSpinner.style.display = 'none';
-        }
+        if (loginSpinner) loginSpinner.style.display = 'none';
         showCustomError('An unexpected error occurred. Please try again.');
       })
       .checkLogin(username, password);
   }
-
-  /* =====================================
-     EXISTING CONTACTS MANAGEMENT
-     ===================================== */
+  
+  /* =========================================================
+   * 4) EXISTING CONTACTS MANAGEMENT
+   * ========================================================= */
   function populateExistingContacts(customerId) {
     google.script.run
       .withSuccessHandler(function(contacts) {
         const existingContactsContainer = document.getElementById('existingContactsContainer');
         if (!existingContactsContainer) return;
-        existingContactsContainer.innerHTML = ''; // Clear old contents
-
-        // Disable the Customer dropdown after selection
+        existingContactsContainer.innerHTML = '';
+  
         const customerSelect = document.getElementById('Customer');
-        if (customerSelect) {
-          customerSelect.disabled = true;
-        }
-
-        // Show a label for the selected customer
+        if (customerSelect) customerSelect.disabled = true;
+  
         const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
         if (selectedCustomerLabel) {
           selectedCustomerLabel.textContent = `Selected Customer: ${customerId}`;
           selectedCustomerLabel.style.display = 'block';
         }
-
-        // Show "Change Customer" button if needed
+  
         const changeCustomerBtn = document.getElementById('changeCustomerBtn');
-        if (changeCustomerBtn) {
-          changeCustomerBtn.style.display = 'inline-block';
-        }
-
+        if (changeCustomerBtn) changeCustomerBtn.style.display = 'inline-block';
+  
         if (contacts.length > 0) {
-          // Create heading
           const heading = document.createElement('h4');
           heading.textContent = 'Existing Contact Persons:';
           existingContactsContainer.appendChild(heading);
-
-          // List each existing contact with a checkbox
+  
           contacts.forEach((contact, index) => {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `existingContact_${index}`;
             checkbox.value = index;
             checkbox.classList.add('existing-contact-checkbox');
-
+  
             const label = document.createElement('label');
             label.htmlFor = `existingContact_${index}`;
             label.textContent = `${contact.name} (${contact.post}) - ${contact.number}`;
-
+  
             const wrapper = document.createElement('div');
             wrapper.classList.add('existing-contact');
             wrapper.appendChild(checkbox);
             wrapper.appendChild(label);
-
+  
             existingContactsContainer.appendChild(wrapper);
           });
-
-          // Add a button to add all selected existing contacts
+  
           const addSelectedBtn = document.createElement('button');
           addSelectedBtn.type = 'button';
           addSelectedBtn.id = 'addSelectedContactsBtn';
@@ -388,7 +266,6 @@
           addSelectedBtn.addEventListener('click', addSelectedContacts);
           existingContactsContainer.appendChild(addSelectedBtn);
         } else {
-          // If no contacts, show a message
           const message = document.createElement('p');
           message.className = 'no-contacts-message';
           message.textContent = 'No existing contacts found. Please add contacts manually.';
@@ -401,184 +278,160 @@
       })
       .getExistingContacts(customerId);
   }
-
-function addSelectedContacts() {
-  const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
-  if (checkboxes.length === 0) {
-    showCustomError('Please select at least one existing contact to add.');
-    return;
-  }
-
-  // Use the correct container ID
-  const manualContainer = document.getElementById('manualContactsContainer'); 
-  if (!manualContainer) return;
-  let addedCount = 0;
-
-  checkboxes.forEach(cb => {
-    // Convert value to number (if needed)
-    const contactIndex = parseInt(cb.value, 10);
-    const contact = window.existingContactsData[contactIndex];
-    if (contact) {
-      // Find the first empty contact person field inside the manual container
-      const contactPersons = manualContainer.querySelectorAll('.contact-person');
-      let fieldFilled = false;
-      for (let cp of contactPersons) {
-        const nameInput = cp.querySelector('.contact-name');
-        const postInput = cp.querySelector('.contact-post');
-        const numberInput = cp.querySelector('.contact-number');
-
-        if (!nameInput.value.trim() && !postInput.value.trim() && !numberInput.value.trim()) {
-          nameInput.value = contact.name;
-          postInput.value = contact.post;
-          numberInput.value = (contact.number && contact.number !== 'N/A') ? contact.number : '';
-          fieldFilled = true;
+  
+  function addSelectedContacts() {
+    const checkboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
+    if (checkboxes.length === 0) {
+      showCustomError('Please select at least one existing contact to add.');
+      return;
+    }
+  
+    const manualContainer = document.getElementById('manualContactsContainer');
+    if (!manualContainer) return;
+    let addedCount = 0;
+  
+    checkboxes.forEach(cb => {
+      const contactIndex = parseInt(cb.value, 10);
+      const contact = window.existingContactsData[contactIndex];
+      if (contact) {
+        const contactPersons = manualContainer.querySelectorAll('.contact-person');
+        let fieldFilled = false;
+        for (let cp of contactPersons) {
+          const nameInput = cp.querySelector('.contact-name');
+          const postInput = cp.querySelector('.contact-post');
+          const numberInput = cp.querySelector('.contact-number');
+  
+          if (!nameInput.value.trim() && !postInput.value.trim() && !numberInput.value.trim()) {
+            nameInput.value = contact.name;
+            postInput.value = contact.post;
+            numberInput.value = (contact.number && contact.number !== 'N/A') ? contact.number : '';
+            fieldFilled = true;
+            addedCount++;
+            break;
+          }
+        }
+        if (!fieldFilled) {
+          addContactPerson({
+            name: contact.name,
+            post: contact.post,
+            number: (contact.number && contact.number !== 'N/A') ? contact.number : ''
+          });
           addedCount++;
-          break;
         }
       }
-      
-      if (!fieldFilled) {
-        // Add a new contact person if no empty entry was found
-        addContactPerson({
-          name: contact.name,
-          post: contact.post,
-          number: (contact.number && contact.number !== 'N/A') ? contact.number : ''
-        });
-        addedCount++;
-      }
+    });
+  
+    if (addedCount > 0) {
+      showConfirmationMessage(`${addedCount} contact(s) added successfully.`);
+    } else {
+      showCustomError('No contacts were added.');
     }
-  });
-
-  if (addedCount > 0) {
-    showConfirmationMessage(`${addedCount} contact(s) added successfully.`);
-  } else {
-    showCustomError('No contacts were added.');
+    checkboxes.forEach(cb => cb.checked = false);
   }
-
-  // Optionally uncheck the checkboxes
-  checkboxes.forEach(cb => cb.checked = false);
-}
-
-function resetContactsSection() {
-  const existingContactsContainer = document.getElementById('existingContactsContainer');
-  if (existingContactsContainer) {
-    existingContactsContainer.innerHTML = '';
-  }
-
-  // Reset the manual contacts container to a single blank contact
-  const container = document.getElementById('manualContactsContainer');
-  if (container) {
-    container.innerHTML = `
-      <div class="contact-person" data-index="0">
-        <div class="contact-header">
-          <h4>Contact Person <span class="contact-letter">A</span></h4>
-          <button type="button" class="remove-contact btn btn-danger" style="display: none;">×</button>
-        </div>
-        <div class="contact-fields">
-          <div class="form-group">
-            <label>Name:</label>
-            <input type="text" class="contact-name" placeholder="Enter name" required aria-required="true">
+  
+  function resetContactsSection() {
+    const existingContactsContainer = document.getElementById('existingContactsContainer');
+    if (existingContactsContainer) existingContactsContainer.innerHTML = '';
+  
+    const container = document.getElementById('manualContactsContainer');
+    if (container) {
+      container.innerHTML = `
+        <div class="contact-person" data-index="0">
+          <div class="contact-header">
+            <h4>Contact Person <span class="contact-letter">A</span></h4>
+            <button type="button" class="remove-contact btn btn-danger" style="display: none;">×</button>
           </div>
-          <div class="form-group">
-            <label>Post:</label>
-            <input type="text" class="contact-post" placeholder="Enter designation" required aria-required="true">
-          </div>
-          <div class="form-group">
-            <label>Contact Number:</label>
-            <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+          <div class="contact-fields">
+            <div class="form-group">
+              <label>Name:</label>
+              <input type="text" class="contact-name" placeholder="Enter name" required aria-required="true">
+            </div>
+            <div class="form-group">
+              <label>Post:</label>
+              <input type="text" class="contact-post" placeholder="Enter designation" required aria-required="true">
+            </div>
+            <div class="form-group">
+              <label>Contact Number:</label>
+              <input type="tel" class="contact-number" placeholder="Enter contact number (optional)">
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
+    }
   }
-}
-
-  /* =====================================
-     MANUAL CONTACT PERSONS (CORE FUNCTIONS)
-     ===================================== */
-function addContactPerson(existingData = null) {
-  const container = document.getElementById('manualContactsContainer');
-  if (!container) return;
-  const contacts = container.getElementsByClassName('contact-person');
-
-  if (contacts.length >= 26) {
-    showCustomError('Maximum number of contact persons (26) reached');
-    return;
+  
+  /* =========================================================
+   * 5) MANUAL CONTACT PERSONS (CORE FUNCTIONS)
+   * ========================================================= */
+  function addContactPerson(existingData = null) {
+    const container = document.getElementById('manualContactsContainer');
+    if (!container) return;
+    const contacts = container.getElementsByClassName('contact-person');
+  
+    if (contacts.length >= 26) {
+      showCustomError('Maximum number of contact persons (26) reached');
+      return;
+    }
+  
+    const template = contacts[0].cloneNode(true);
+    const newIndex = contacts.length;
+    template.setAttribute('data-index', newIndex);
+  
+    const letterSpan = template.querySelector('.contact-letter');
+    if (letterSpan) letterSpan.textContent = String.fromCharCode(65 + newIndex);
+  
+    const nameInput = template.querySelector('.contact-name');
+    const postInput = template.querySelector('.contact-post');
+    const numberInput = template.querySelector('.contact-number');
+  
+    if (existingData) {
+      if (nameInput) nameInput.value = existingData.name;
+      if (postInput) postInput.value = existingData.post;
+      if (numberInput) numberInput.value = existingData.number;
+    } else {
+      if (nameInput) nameInput.value = '';
+      if (postInput) postInput.value = '';
+      if (numberInput) numberInput.value = '';
+    }
+  
+    const removeBtn = template.querySelector('.remove-contact');
+    if (removeBtn) removeBtn.style.display = 'block';
+  
+    container.appendChild(template);
+    updateContactLetters();
   }
-
-  // Clone the first contact-person as a template
-  const template = contacts[0].cloneNode(true);
-  const newIndex = contacts.length;
-
-  // Update the data-index and letter label (A, B, C, etc.)
-  template.setAttribute('data-index', newIndex);
-  const letterSpan = template.querySelector('.contact-letter');
-  if (letterSpan) {
-    letterSpan.textContent = String.fromCharCode(65 + newIndex);
-  }
-
-  const nameInput = template.querySelector('.contact-name');
-  const postInput = template.querySelector('.contact-post');
-  const numberInput = template.querySelector('.contact-number');
-
-  if (existingData) {
-    if (nameInput) nameInput.value = existingData.name;
-    if (postInput) postInput.value = existingData.post;
-    if (numberInput) numberInput.value = existingData.number;
-  } else {
-    if (nameInput) nameInput.value = '';
-    if (postInput) postInput.value = '';
-    if (numberInput) numberInput.value = '';
-  }
-
-  // Ensure the remove button is visible for additional entries
-  const removeBtn = template.querySelector('.remove-contact');
-  if (removeBtn) {
-    removeBtn.style.display = 'block';
-  }
-
-  container.appendChild(template);
-  updateContactLetters();
-}
-
+  
   function removeContactPerson(button) {
-    // Confirm before removing
     if (!confirm('Are you sure you want to remove this contact?')) return;
-
     const contactPerson = button.closest('.contact-person');
     if (contactPerson) {
       contactPerson.remove();
       updateContactLetters();
     }
   }
-
+  
   function updateContactLetters() {
     const contacts = document.querySelectorAll('.contact-person');
     contacts.forEach((contact, index) => {
       contact.setAttribute('data-index', index);
-      const letter = String.fromCharCode(65 + index);
       const letterSpan = contact.querySelector('.contact-letter');
-      if (letterSpan) {
-        letterSpan.textContent = letter;
-      }
+      if (letterSpan) letterSpan.textContent = String.fromCharCode(65 + index);
     });
   }
-
+  
   function validateContactPersons() {
     const contacts = document.querySelectorAll('.contact-person');
     let isValid = true;
-
+  
     contacts.forEach(contact => {
       const nameInput = contact.querySelector('.contact-name');
       const postInput = contact.querySelector('.contact-post');
       const numberInput = contact.querySelector('.contact-number');
-
-      // Clear old errors
+  
       if (nameInput) nameInput.classList.remove('error');
       if (postInput) postInput.classList.remove('error');
       if (numberInput) numberInput.classList.remove('error');
-
-      // Check required fields
+  
       if (nameInput && !nameInput.value.trim()) {
         nameInput.classList.add('error');
         isValid = false;
@@ -587,55 +440,46 @@ function addContactPerson(existingData = null) {
         postInput.classList.add('error');
         isValid = false;
       }
-
-      // Phone format check if provided
-      if (numberInput && numberInput.value.trim() && 
+      if (numberInput && numberInput.value.trim() &&
           !/^\+?\d{11,13}$/.test(numberInput.value.replace(/\s+/g, ''))) {
         numberInput.classList.add('error');
         isValid = false;
       }
     });
-
+  
     return isValid;
   }
-
-function getContactPersonsData() {
-  const contacts = document.querySelectorAll('#manualContactsContainer .contact-person');
-  return Array.from(contacts).map(contact => ({
-    name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
-    post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
-    number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
-  }));
-}
-
-
-  /* =====================================
-     WORKLOAD MANAGEMENT
-     ===================================== */
+  
+  function getContactPersonsData() {
+    const contacts = document.querySelectorAll('#manualContactsContainer .contact-person');
+    return Array.from(contacts).map(contact => ({
+      name: sanitizeInput(contact.querySelector('.contact-name').value.trim()),
+      post: sanitizeInput(contact.querySelector('.contact-post').value.trim()),
+      number: sanitizeInput(contact.querySelector('.contact-number').value.trim() || 'N/A')
+    }));
+  }
+  
+  /* =========================================================
+   * 6) WORKLOAD MANAGEMENT
+   * ========================================================= */
   function addWorkloadItem() {
     const container = document.getElementById('workloadContainer');
     if (!container) return;
     const items = container.getElementsByClassName('workload-item');
     const template = items[0].cloneNode(true);
     const newIndex = items.length;
-
+  
     const letterSpan = template.querySelector('.workload-letter');
-    if (letterSpan) {
-      letterSpan.textContent = String.fromCharCode(65 + newIndex);
-    }
-
-    template.querySelectorAll('input').forEach(input => {
-      input.value = '';
-    });
-
+    if (letterSpan) letterSpan.textContent = String.fromCharCode(65 + newIndex);
+  
+    template.querySelectorAll('input').forEach(input => { input.value = ''; });
+  
     const removeBtn = template.querySelector('.remove-workload');
-    if (removeBtn) {
-      removeBtn.style.display = 'block';
-    }
-
+    if (removeBtn) removeBtn.style.display = 'block';
+  
     container.appendChild(template);
   }
-
+  
   function removeWorkloadItem(button) {
     const workloadItem = button.closest('.workload-item');
     if (workloadItem) {
@@ -643,22 +487,20 @@ function getContactPersonsData() {
       updateWorkloadIndices();
     }
   }
-
+  
   function updateWorkloadIndices() {
     const items = document.querySelectorAll('.workload-item');
     items.forEach((item, index) => {
       const letterSpan = item.querySelector('.workload-letter');
-      if (letterSpan) {
-        letterSpan.textContent = String.fromCharCode(65 + index);
-      }
+      if (letterSpan) letterSpan.textContent = String.fromCharCode(65 + index);
     });
   }
-
+  
   function getWorkloadData() {
     const items = document.querySelectorAll('.workload-item');
     const customer = document.getElementById('Customer') ? document.getElementById('Customer').value : '';
     return Array.from(items).map(item => ({
-      addedBy: window.currentUser || '', // Current user's name
+      addedBy: window.currentUser || '',
       customer: sanitizeInput(customer),
       competitor: sanitizeInput(item.querySelector('.workload-competitor').value),
       competitorModel: sanitizeInput(item.querySelector('.workload-model').value),
@@ -666,34 +508,37 @@ function getContactPersonsData() {
       perTestCost: sanitizeInput(item.querySelector('.workload-cost').value)
     }));
   }
-
-  /* =====================================
-     DATE VALIDATION
-     ===================================== */
+  
+  /* =========================================================
+   * 7) DATE VALIDATION
+   * ========================================================= */
   function validateDates() {
     const visitDateValue = document.getElementById('dateOfVisit').value;
     const nextVisitValue = document.getElementById('nextVisit').value;
-
     const visitDate = visitDateValue ? new Date(visitDateValue) : null;
     const nextVisit = nextVisitValue ? new Date(nextVisitValue) : null;
+    
+    // Normalize today's date to midnight
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-  // 1) Disallow if visitDate is in the future
+    
+    if (visitDate) {
+      visitDate.setHours(0, 0, 0, 0);
+    }
+    if (nextVisit) {
+      nextVisit.setHours(0, 0, 0, 0);
+    }
+  
     if (visitDate && visitDate > today) {
       showCustomError('Visit date cannot be in the future');
       return false;
     }
-
-    // 2) Disallow if visitDate is more than 2 days old
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(today.getDate() - 2); // 2 days in the past
-    if (visitDate && visitDate < twoDaysAgo) {
-      showCustomError('You cannot enter a date more than 2 days old.');
+    const fourDaysAgo = new Date(today);
+    fourDaysAgo.setDate(today.getDate() - 4);
+    if (visitDate && visitDate < fourDaysAgo) {
+      showCustomError('You cannot enter a date more than 4 days old.');
       return false;
     }
-
-    // 3) Check nextVisit constraints
     if (nextVisit) {
       if (nextVisit < today) {
         showCustomError('Next visit date cannot be in the past');
@@ -706,25 +551,23 @@ function getContactPersonsData() {
     }
     return true;
   }
-  /* =====================================
-     DROPDOWNS & LOADERS
-     ===================================== */
+  
+  
+  /* =========================================================
+   * 8) DROPDOWNS & LOADERS
+   * ========================================================= */
   function populateDropdowns() {
-    // Fetch and populate independent dropdowns
     const independentDropdowns = ['Region', 'Product', 'Department'];
     
     independentDropdowns.forEach(function(dd) {
       showLoadingDots(`${dd.toLowerCase()}Loading`, true);
-      
       if (dd === 'Region') {
         google.script.run
           .withSuccessHandler(function(data) {
             populateDropdown(dd, data);
             showLoadingDots(`${dd.toLowerCase()}Loading`, false);
             const regionSelect = document.getElementById('Region');
-            if (regionSelect) {
-              regionSelect.addEventListener('change', filterCityByRegion);
-            }
+            if (regionSelect) regionSelect.addEventListener('change', filterCityByRegion);
           })
           .withFailureHandler(function(error) {
             console.error(`Failed to populate ${dd}:`, error);
@@ -738,9 +581,7 @@ function getContactPersonsData() {
             populateDropdown(dd, data);
             showLoadingDots(`${dd.toLowerCase()}Loading`, false);
             const productSelect = document.getElementById('Product');
-            if (productSelect) {
-              productSelect.addEventListener('change', filterAnalyzerByProduct);
-            }
+            if (productSelect) productSelect.addEventListener('change', filterAnalyzerByProduct);
           })
           .withFailureHandler(function(error) {
             console.error(`Failed to populate ${dd}:`, error);
@@ -749,12 +590,10 @@ function getContactPersonsData() {
           })
           .getUniqueProducts();
       } else {
-        // For other independent dropdowns like Department
         google.script.run
           .withSuccessHandler(function(data) {
             populateDropdown(dd, data);
             showLoadingDots(`${dd.toLowerCase()}Loading`, false);
-            // Add change listeners for other dropdowns if necessary
           })
           .withFailureHandler(function(error) {
             console.error(`Failed to populate ${dd}:`, error);
@@ -764,14 +603,11 @@ function getContactPersonsData() {
           .getDropdownDataCached(dd);
       }
     });
-
-    // Initialize dependent dropdowns as disabled
+  
     const dependentDropdowns = ['City', 'Customer', 'AnalyzerModel', 'Flags'];
     dependentDropdowns.forEach(dd => {
       const select = document.getElementById(dd);
-      if (select) {
-        select.disabled = true;
-      }
+      if (select) select.disabled = true;
     });
     const categoryInput = document.getElementById('Category');
     if (categoryInput) {
@@ -779,7 +615,7 @@ function getContactPersonsData() {
       categoryInput.disabled = true;
     }
   }
-
+  
   function populateDropdown(id, data) {
     const select = document.getElementById(id);
     if (!select) {
@@ -787,8 +623,7 @@ function getContactPersonsData() {
       return;
     }
     try {
-      if (id === 'Category') return; // Category is handled separately
-
+      if (id === 'Category') return;
       select.innerHTML = '<option value="">Select</option>';
       if (data && Array.isArray(data) && data.length > 0) {
         data.forEach(function(row) {
@@ -805,7 +640,7 @@ function getContactPersonsData() {
       showCustomError(`Error loading ${id} options`);
     }
   }
-
+  
   function filterCityByRegion() {
     const region = document.getElementById('Region').value;
     const citySelect = document.getElementById('City');
@@ -814,10 +649,11 @@ function getContactPersonsData() {
       google.script.run
         .withSuccessHandler(function(cities) {
           populateDropdown('City', cities);
-          citySelect.disabled = false;
-          showLoadingDots('cityLoading', false);
-          // Add change listener for City
-          citySelect.addEventListener('change', filterCustomersByCity);
+          if (citySelect) {
+            citySelect.disabled = false;
+            showLoadingDots('cityLoading', false);
+            citySelect.addEventListener('change', filterCustomersByCity);
+          }
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load cities:', error);
@@ -827,11 +663,11 @@ function getContactPersonsData() {
         .getCityByRegion(region);
     } else {
       clearDropdown('City');
-      citySelect.disabled = true;
+      if (citySelect) citySelect.disabled = true;
       showLoadingDots('cityLoading', false);
     }
   }
-
+  
   function filterCustomersByCity() {
     const city = document.getElementById('City').value;
     const customerSelect = document.getElementById('Customer');
@@ -840,21 +676,27 @@ function getContactPersonsData() {
       google.script.run
         .withSuccessHandler(function(customers) {
           populateDropdown('Customer', customers);
-          customerSelect.disabled = false;
-          showLoadingDots('customerLoading', false);
-          // Add change listener for Customer
-          customerSelect.addEventListener('change', function(e) {
-            resetContactsSection();
-
-            if (e.target.value) {
-              google.script.run
-                .withSuccessHandler(function(contacts) {
-                  window.existingContactsData = contacts;
-                  populateExistingContacts(e.target.value);
-                })
-                .getExistingContacts(e.target.value);
-            }
-          });
+          if (customerSelect) {
+            customerSelect.disabled = false;
+            if (customerSelect.value) {
+          const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+          if (changeCustomerBtn) {
+            changeCustomerBtn.style.display = 'inline-block';
+          }
+        }
+            showLoadingDots('customerLoading', false);
+            customerSelect.addEventListener('change', function(e) {
+              resetContactsSection();
+              if (e.target.value) {
+                google.script.run
+                  .withSuccessHandler(function(contacts) {
+                    window.existingContactsData = contacts;
+                    populateExistingContacts(e.target.value);
+                  })
+                  .getExistingContacts(e.target.value);
+              }
+            });
+          }
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load customers:', error);
@@ -864,45 +706,37 @@ function getContactPersonsData() {
         .getCustomersByCity(city);
     } else {
       clearDropdown('Customer');
-      customerSelect.disabled = true;
+      if (customerSelect) customerSelect.disabled = true;
       showLoadingDots('customerLoading', false);
     }
   }
-
+  
   function filterAnalyzerByProduct() {
     const product = document.getElementById('Product').value;
     const analyzerSelect = document.getElementById('AnalyzerModel');
     const flagsSelect = document.getElementById('Flags');
     const categoryInput = document.getElementById('Category');
-
-    // Reset lower dropdowns
+  
     clearDropdown('AnalyzerModel');
     clearDropdown('Flags');
-    categoryInput.value = '';
-
-    if (flagsSelect) {
-      flagsSelect.disabled = true;
-    }
-    if (categoryInput) {
-      categoryInput.disabled = true;
-    }
-
+    if (categoryInput) categoryInput.value = '';
+  
+    if (flagsSelect) flagsSelect.disabled = true;
+    if (categoryInput) categoryInput.disabled = true;
+  
     if (product) {
       showLoadingDots('analyzerLoading', true);
       google.script.run
         .withSuccessHandler(function(analyzers) {
-          console.log('Analyzers received:', analyzers); // Debugging line
           if (analyzers.length === 0) {
             showCustomError('No Analyzer Models found for the selected Product.');
           }
           populateDropdown('AnalyzerModel', analyzers);
-          analyzerSelect.disabled = false;
-          showLoadingDots('analyzerLoading', false);
-
-          // Attach change listener now that AnalyzerModel is populated
-          analyzerSelect.addEventListener('change', function() {
-            filterFlagsByAnalyzerModel();
-          });
+          if (analyzerSelect) {
+            analyzerSelect.disabled = false;
+            showLoadingDots('analyzerLoading', false);
+            analyzerSelect.addEventListener('change', filterFlagsByAnalyzerModel);
+          }
         })
         .withFailureHandler(function(error) {
           console.error('Failed to load analyzers:', error);
@@ -911,74 +745,54 @@ function getContactPersonsData() {
         })
         .getAnalyzersByProduct(product);
     } else {
-      if (analyzerSelect) {
-        analyzerSelect.disabled = true;
-      }
+      if (analyzerSelect) analyzerSelect.disabled = true;
       showLoadingDots('analyzerLoading', false);
     }
   }
-
-function filterFlagsByAnalyzerModel() {
-  const product = document.getElementById('Product').value;
-  const analyzerModel = document.getElementById('AnalyzerModel').value;
-  // Declare flagsSelect here
-  const flagsSelect = document.getElementById('Flags');
-  const categoryInput = document.getElementById('Category');
-
-  // Reset Flags and Category
-  clearDropdown('Flags');
-  categoryInput.value = '';
-  if (flagsSelect) {
-    flagsSelect.disabled = true;
-  }
-  if (categoryInput) {
-    categoryInput.disabled = true;
-  }
-
-  if (product && analyzerModel) {
-    showLoadingDots('flagsLoading', true);
-    google.script.run
-      .withSuccessHandler(function(flags) {
-        console.log('Flags received:', flags); // Debugging line
-        if (flags.length === 0) {
-          showCustomError('No Flags found for the selected Analyzer Model.');
-        }
-        populateDropdown('Flags', flags);
-        // Re-fetch flagsSelect in case the dropdown was repopulated
-        const flagsSelect = document.getElementById('Flags');
-        if (flagsSelect) {
-          flagsSelect.disabled = false;
-          // Attach change listener to Flags dropdown
-          flagsSelect.addEventListener('change', filterCategoryByFlag);
-        }
-        showLoadingDots('flagsLoading', false);
-      })
-      .withFailureHandler(function(error) {
-        console.error('Failed to load flags:', error);
-        showLoadingDots('flagsLoading', false);
-        showCustomError('Failed to load flags. Please try again.');
-      })
-      .getFlagsByProductAndAnalyzer(product, analyzerModel);
-  } else {
-    if (flagsSelect) {
-      flagsSelect.disabled = true;
+  
+  function filterFlagsByAnalyzerModel() {
+    const product = document.getElementById('Product').value;
+    const analyzerModel = document.getElementById('AnalyzerModel').value;
+    const flagsSelect = document.getElementById('Flags');
+    const categoryInput = document.getElementById('Category');
+  
+    clearDropdown('Flags');
+    if (categoryInput) categoryInput.value = '';
+    if (flagsSelect) flagsSelect.disabled = true;
+    if (categoryInput) categoryInput.disabled = true;
+  
+    if (product && analyzerModel) {
+      showLoadingDots('flagsLoading', true);
+      google.script.run
+        .withSuccessHandler(function(flags) {
+          if (flags.length === 0) {
+            showCustomError('No Flags found for the selected Analyzer Model.');
+          }
+          populateDropdown('Flags', flags);
+          if (flagsSelect) {
+            flagsSelect.disabled = false;
+            flagsSelect.addEventListener('change', filterCategoryByFlag);
+          }
+          showLoadingDots('flagsLoading', false);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Failed to load flags:', error);
+          showLoadingDots('flagsLoading', false);
+          showCustomError('Failed to load flags. Please try again.');
+        })
+        .getFlagsByProductAndAnalyzer(product, analyzerModel);
+    } else {
+      if (flagsSelect) flagsSelect.disabled = true;
+      showLoadingDots('flagsLoading', false);
     }
-    showLoadingDots('flagsLoading', false);
   }
-}
-
-
-  /**
-   * Called when the "Flags" dropdown changes.
-   * Fetches the matching Category from the server and updates the Category field.
-   */
+  
   function filterCategoryByFlag() {
     const product = document.getElementById('Product').value;
     const analyzerModel = document.getElementById('AnalyzerModel').value;
     const flag = document.getElementById('Flags').value;
     const categoryInput = document.getElementById('Category');
-
-    // If product, analyzerModel, or flag is missing, clear Category
+  
     if (!product || !analyzerModel || !flag) {
       if (categoryInput) {
         categoryInput.value = '';
@@ -986,12 +800,9 @@ function filterFlagsByAnalyzerModel() {
       }
       return;
     }
-
-    // Make a server call to get the Category
+  
     google.script.run
       .withSuccessHandler(function(categoryValue) {
-        console.log('Category received:', categoryValue); // Debugging line
-        // If no category found, set the input to indicate so
         if (!categoryValue) {
           if (categoryInput) {
             categoryInput.value = 'No Category Found';
@@ -999,11 +810,9 @@ function filterFlagsByAnalyzerModel() {
           }
           return;
         }
-
-        // Otherwise, set the Category
         if (categoryInput) {
           categoryInput.value = categoryValue;
-          categoryInput.disabled = true; // Remain disabled
+          categoryInput.disabled = true;
         }
       })
       .withFailureHandler(function(error) {
@@ -1014,10 +823,9 @@ function filterFlagsByAnalyzerModel() {
           categoryInput.disabled = true;
         }
       })
-      .getCategoryByProductAnalyzerFlag(product, analyzerModel, flag); 
+      .getCategoryByProductAnalyzerFlag(product, analyzerModel, flag);
   }
-
-
+  
   function clearDropdown(id) {
     const select = document.getElementById(id);
     if (select) {
@@ -1025,37 +833,32 @@ function filterFlagsByAnalyzerModel() {
       select.disabled = true;
     }
   }
-
+  
   function showLoadingDots(id, show) {
     const element = document.getElementById(id);
-    if (element) {
-      element.style.display = show ? 'inline-block' : 'none';
-    }
+    if (element) element.style.display = show ? 'inline-block' : 'none';
   }
-
+  
   function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
     return input.trim().replace(/[<>]/g, '').replace(/[&]/g, 'and').replace(/['"]/g, '').substr(0, 1000);
   }
-
-  /* =====================================
-     FORM VALIDATION & SUBMISSION
-     ===================================== */
+  
+  /* =========================================================
+   * 9) FORM VALIDATION & SUBMISSION
+   * ========================================================= */
   document.getElementById('dataForm').onsubmit = function(e) {
     e.preventDefault();
     const submitSpinner = document.getElementById('submitSpinner');
-    if (submitSpinner) {
-      submitSpinner.style.display = 'inline-block';
-    }
-
-    // Required fields
+    if (submitSpinner) submitSpinner.style.display = 'inline-block';
+  
     const requiredFields = [
       'dateOfVisit','visitType','Region','City','Customer',
       'Department','Product','AnalyzerModel','Flags','VISIT_DESCRIPTION'
     ];
     let isValid = true;
     let firstInvalid = null;
-
+  
     requiredFields.forEach(function(id) {
       const field = document.getElementById(id);
       if (field && !field.value) {
@@ -1066,34 +869,23 @@ function filterFlagsByAnalyzerModel() {
         field.classList.remove('error-border');
       }
     });
-
-    // Validate date constraints
-    if (!validateDates()) {
-      isValid = false;
-    }
-
-    // Validate contact persons
+  
+    if (!validateDates()) isValid = false;
     if (!validateContactPersons()) {
       isValid = false;
       showCustomError('Please fill in all required contact person fields correctly.');
     }
-
+  
     if (!isValid) {
-      if (submitSpinner) {
-        submitSpinner.style.display = 'none';
-      }
+      if (submitSpinner) submitSpinner.style.display = 'none';
       if (firstInvalid) firstInvalid.focus();
       return;
     }
-
-    // Handle image file if any
+  
     const imageFile = document.getElementById('imageUpload').files[0];
-
+  
     const finalizeSubmission = function(imageDataUrl) {
-      // Gather manual contacts
       const manualContacts = getContactPersonsData();
-
-      // Gather selected existing contacts
       const selectedCheckboxes = document.querySelectorAll('.existing-contact-checkbox:checked');
       const selectedExistingContacts = Array.from(selectedCheckboxes).map(cb => {
         const index = cb.value;
@@ -1104,17 +896,12 @@ function filterFlagsByAnalyzerModel() {
           number: sanitizeInput(contact.number !== 'N/A' ? contact.number : '')
         };
       });
-
-      // Combine them, skipping duplicates
       const allContacts = [...selectedExistingContacts, ...manualContacts];
-
-      // Fetch the Category value
       const categoryInput = document.getElementById('Category');
-      const categoryValue = categoryInput && categoryInput.value 
-                            ? sanitizeInput(categoryInput.value) 
+      const categoryValue = (categoryInput && categoryInput.value)
+                            ? sanitizeInput(categoryInput.value)
                             : "";
-
-      // Build form object
+  
       const formObject = {
         dateOfVisit: sanitizeInput(document.getElementById('dateOfVisit').value),
         visitType: sanitizeInput(document.getElementById('visitType').value),
@@ -1135,27 +922,23 @@ function filterFlagsByAnalyzerModel() {
         workloads: getWorkloadData(),
         submissionTimeStamp: getCurrentPKTTimeStamp()
       };
-
-      console.log('Form Object:', formObject); // Debugging line
-
+  
+      console.log('Form Object:', formObject);
+  
       google.script.run
         .withSuccessHandler(function(response) {
-          if (submitSpinner) {
-            submitSpinner.style.display = 'none';
-          }
+          if (submitSpinner) submitSpinner.style.display = 'none';
           showConfirmationMessage(response);
           showCustomModal();
         })
         .withFailureHandler(function(error) {
           console.error('Error submitting form:', error);
-          if (submitSpinner) {
-            submitSpinner.style.display = 'none';
-          }
+          if (submitSpinner) submitSpinner.style.display = 'none';
           showCustomError('Failed to submit the form. Please try again.');
         })
         .processForm(formObject, window.currentUser, window.sessionToken);
     };
-
+  
     if (imageFile) {
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -1166,21 +949,12 @@ function filterFlagsByAnalyzerModel() {
       finalizeSubmission("");
     }
   };
-
-  /**
-   * Resets the form to a fresh state
-   */
+  
   function resetForm() {
     const dataForm = document.getElementById('dataForm');
-    if (dataForm) {
-      dataForm.reset();
-    }
+    if (dataForm) dataForm.reset();
     const newCustomerField = document.getElementById('newCustomerField');
-    if (newCustomerField) {
-      newCustomerField.style.display = 'none';
-    }
-
-    // Reset manual container to one blank contact
+    if (newCustomerField) newCustomerField.style.display = 'none';
     const contactPersonsContainer = document.getElementById('contactPersonsContainer');
     if (contactPersonsContainer) {
       contactPersonsContainer.innerHTML = `
@@ -1206,60 +980,40 @@ function filterFlagsByAnalyzerModel() {
         </div>
       `;
     }
-
-    // Remove additional contacts
     const contacts = document.querySelectorAll('.contact-person');
     if (contacts.length > 1) {
       for (let i = contacts.length - 1; i > 0; i--) {
         contacts[i].remove();
       }
     }
-
-    // Remove image preview
     removeImage();
-
-    // Clear existing contacts
     resetContactsSection();
-
-    // Re-enable the Customer dropdown if desired
     const customerSelect = document.getElementById('Customer');
-    if (customerSelect) {
-      customerSelect.disabled = false;
-    }
-
-    // Hide selectedCustomerLabel & changeCustomerBtn if used
+    if (customerSelect) customerSelect.disabled = false;
     const selectedCustomerLabel = document.getElementById('selectedCustomerLabel');
     if (selectedCustomerLabel) {
       selectedCustomerLabel.style.display = 'none';
       selectedCustomerLabel.textContent = '';
     }
     const changeCustomerBtn = document.getElementById('changeCustomerBtn');
-    if (changeCustomerBtn) {
-      changeCustomerBtn.style.display = 'none';
-    }
+    if (changeCustomerBtn) changeCustomerBtn.style.display = 'none';
   }
-
-  /* =====================================
-     MODALS & CONFIRMATIONS
-     ===================================== */
+  
+  /* =========================================================
+   * 10) MODALS & CONFIRMATIONS
+   * ========================================================= */
   function showCustomError(msg) {
     const errorModal = document.getElementById('errorModal');
     const errorMessage = document.getElementById('errorMessage');
-    if (errorMessage) {
-      errorMessage.textContent = msg;
-    }
-    if (errorModal) {
-      errorModal.style.display = 'flex';
-    }
+    if (errorMessage) errorMessage.textContent = msg;
+    if (errorModal) errorModal.style.display = 'flex';
   }
-
+  
   function closeErrorModal() {
     const errorModal = document.getElementById('errorModal');
-    if (errorModal) {
-      errorModal.style.display = 'none';
-    }
+    if (errorModal) errorModal.style.display = 'none';
   }
-
+  
   function showConfirmationMessage(msg) {
     const cm = document.getElementById('confirmationMessage');
     if (cm) {
@@ -1270,43 +1024,34 @@ function filterFlagsByAnalyzerModel() {
       }, 4000);
     }
   }
-
+  
   function showCustomModal() {
     const cModal = document.getElementById('customModal');
-    if (cModal) {
-      cModal.style.display = 'flex';
-    }
+    if (cModal) cModal.style.display = 'flex';
   }
-
+  
   function handleModalResponse(addMore) {
     if (addMore) {
       resetForm();
       const newCustomerField = document.getElementById('newCustomerField');
-      if (newCustomerField) {
-        newCustomerField.style.display = 'none';
-      }
+      if (newCustomerField) newCustomerField.style.display = 'none';
       document.querySelectorAll('.error').forEach(element => element.classList.remove('error'));
-      document.querySelectorAll('[style*="border"]').forEach(element => {
-        element.style.border = '';
-      });
+      document.querySelectorAll('[style*="border"]').forEach(element => element.style.border = '');
     } else {
       window.location.reload();
     }
     const customModal = document.getElementById('customModal');
-    if (customModal) {
-      customModal.style.display = 'none';
-    }
+    if (customModal) customModal.style.display = 'none';
   }
-
-  /* =====================================
-     IMAGE HANDLING
-     ===================================== */
+  
+  /* =========================================================
+   * 11) IMAGE HANDLING
+   * ========================================================= */
   function previewImage() {
     const fileInput = document.getElementById('imageUpload');
     const previewTag = document.getElementById('previewImageTag');
     const previewDiv = document.getElementById('imagePreview');
     const file = fileInput.files[0];
-
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         showCustomError('Image size should not exceed 5MB');
@@ -1320,56 +1065,82 @@ function filterFlagsByAnalyzerModel() {
       }
       const reader = new FileReader();
       reader.onload = function(e) {
-        if (previewTag) {
-          previewTag.src = e.target.result;
-        }
-        if (previewDiv) {
-          previewDiv.style.display = 'block';
-        }
+        if (previewTag) previewTag.src = e.target.result;
+        if (previewDiv) previewDiv.style.display = 'block';
       };
       reader.readAsDataURL(file);
     }
   }
-
+  
   function removeImage() {
     const fileInput = document.getElementById('imageUpload');
     const previewTag = document.getElementById('previewImageTag');
     const previewDiv = document.getElementById('imagePreview');
-    if (fileInput) {
-      fileInput.value = '';
-    }
-    if (previewTag) {
-      previewTag.src = '';
-    }
-    if (previewDiv) {
-      previewDiv.style.display = 'none';
-    }
+    if (fileInput) fileInput.value = '';
+    if (previewTag) previewTag.src = '';
+    if (previewDiv) previewDiv.style.display = 'none';
   }
-
-  /* =====================================
-     TOGGLE ADD NEW CUSTOMER FORM
-     ===================================== */
+  
+  /* =========================================================
+   * 11.2) saveNewPassword
+   * ========================================================= */
+  
+  function saveNewPassword() {
+    // Get input values from the change password modal
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+  
+    // Basic validation: Check if the new passwords match
+    if (newPassword !== confirmNewPassword) {
+      alert('New password and confirmation do not match.');
+      return;
+    }
+  
+    // Optionally add more validation here (e.g., minimum length, complexity, etc.)
+  
+    // Call the server-side function "changePassword" via google.script.run
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success) {
+          alert('Password changed successfully!');
+          // Optionally, close the change password modal and clear the input fields
+          closeModal('changePasswordModal');
+          clearPasswordFields();
+        } else {
+          alert('Error: ' + response.message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('Change Password Error:', error);
+        alert('Failed to change password. Please try again.');
+      })
+      .changePassword(window.currentUser, currentPassword, newPassword, window.sessionToken);
+  }
+  
+  
+  /* =========================================================
+   * 12) TOGGLE ADD NEW CUSTOMER FORM
+   * ========================================================= */
   function toggleAddCustomerForm() {
     const form = document.getElementById('addCustomerManualForm');
     if (form) {
       form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
       if (form.style.display === 'block') {
         const regionSelect = document.getElementById('addCustRegionSelect');
-        if (regionSelect) {
-          regionSelect.focus();
-        }
+        if (regionSelect) regionSelect.focus();
       }
     }
   }
-
-  /* =====================================
-     SUBMIT ADD NEW CUSTOMER FORM
-     ===================================== */
+  
+  /* =========================================================
+   * 13) SUBMIT ADD NEW CUSTOMER FORM
+   * ========================================================= */
   function submitAddCustomerForm() {
     const region = document.getElementById('addCustRegionSelect').value;
     const city = document.getElementById('addCustCityInput').value.trim();
     const customerName = document.getElementById('addCustNameInput').value.trim();
-
+  
     if (!region) {
       showCustomError('Please select a region.');
       return;
@@ -1382,19 +1153,19 @@ function filterFlagsByAnalyzerModel() {
       showCustomError('Please enter a customer name.');
       return;
     }
-
+  
     const newCustomerData = {
       region: sanitizeInput(region),
       city: sanitizeInput(city),
       customerName: sanitizeInput(customerName)
     };
-
+  
     const saveButton = document.getElementById('saveNewCustomerButton');
     if (saveButton) {
       saveButton.disabled = true;
       saveButton.textContent = 'Saving...';
     }
-
+  
     google.script.run
       .withSuccessHandler(function(response) {
         showConfirmationMessage(response);
@@ -1415,7 +1186,7 @@ function filterFlagsByAnalyzerModel() {
       })
       .addNewCustomerWithCity(newCustomerData.region, newCustomerData.city, newCustomerData.customerName, window.currentUser, window.sessionToken);
   }
-
+  
   function resetAddCustomerForm() {
     const form = document.getElementById('addCustomerManualForm');
     if (form) {
@@ -1423,40 +1194,34 @@ function filterFlagsByAnalyzerModel() {
       form.style.display = 'none';
     }
   }
-
-  /* =====================================
-     INITIALIZATION ON PAGE LOAD
-     ===================================== */
+  
+  /* =========================================================
+   * 14) INITIALIZATION ON PAGE LOAD
+   * ========================================================= */
   window.onload = function() {
     updateTimestamp();
     setInterval(updateTimestamp, 1000);
-
-    // 1) Restrict dateOfVisit to [today-2 days ... up to today]
+  
     const dateOfVisit = document.getElementById('dateOfVisit');
     if (dateOfVisit) {
       const today = new Date();
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(today.getDate() - 2);
-
-      dateOfVisit.max = formatDate(today);     // cannot go beyond today
-      dateOfVisit.min = formatDate(twoDaysAgo); // cannot go more than 2 days in the past
+      const fourDaysAgo = new Date();
+      fourDaysAgo.setDate(today.getDate() - 4);
+      dateOfVisit.max = formatDate(today);
+      dateOfVisit.min = formatDate(fourDaysAgo);
     }
-
-    // 2) Restrict nextVisit to be at least tomorrow
+  
     const nextVisit = document.getElementById('nextVisit');
     if (nextVisit) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       nextVisit.min = formatDate(tomorrow);
     }
-
-    // 3) Ensure Category field is disabled on load
+  
     const categoryInput = document.getElementById('Category');
-    if (categoryInput) {
-      categoryInput.disabled = true;
-    }
+    if (categoryInput) categoryInput.disabled = true;
   };
-
+  
   function updateTimestamp() {
     const now = new Date();
     const formatted = now.toLocaleString('en-US', {
@@ -1464,80 +1229,178 @@ function filterFlagsByAnalyzerModel() {
       day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
     const timestamp = document.getElementById('timestamp');
-    if (timestamp) {
-      timestamp.textContent = 'Current Date & Time: ' + formatted;
-    }
+    if (timestamp) timestamp.textContent = 'Current Date & Time: ' + formatted;
   }
-
+  
   function formatDate(date) {
     return date.toISOString().split('T')[0];
   }
-
-function getCurrentPKTTimeStamp() {
-  // This uses the Asia/Karachi time zone
-  return new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: false });
-}
-
-function viewFilteredData() {
-    const fromDate   = document.getElementById('reportFromDate').value;
-    const toDate     = document.getElementById('reportToDate').value;
-    const spinner    = document.getElementById('reportSpinner');
-    const resultsDiv = document.getElementById('reportResults');
-    resultsDiv.innerHTML = '';
+  
+  function getCurrentPKTTimeStamp() {
+    return new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi', hour12: false });
+  }
+  
+  /* =========================================================
+   * 15) ENHANCEMENT: DISPLAY REPORT DATA
+   * ========================================================= */
+  
+  /**
+   * Converts raw array rows into an array of objects with named properties.
+   * Adjust the indices to match the order your server returns.
+   */
+  function convertRowsToObjects(rows) {
+    // Example mapping: [1: date, 7: salesPerson, 2: callType, 3: region, 4: city,
+    // 5: customer, 6: department, 8: product, 12: details, 17: uploaded]
+    return rows.map(function(row) {
+      return {
+        date:         row[1] || '',
+        salesPerson:  row[7] || '',
+        callType:     row[2] || '',
+        region:       row[3] || '',
+        city:         row[4] || '',
+        customer:     row[5] || '',
+        department:   row[6] || '',
+        product:      row[8] || '',
+        details:      row[12] || '',
+        uploaded:     row[17] || ''
+      };
+    });
+  }
+  
+  /**
+   * Populates both inline and modal tables with row data (as objects).
+   */
+  function displayReportData(data) {
+    const reportTableBody = document.getElementById('reportTableBody');
+    const modalTableBody  = document.getElementById('modalTableBody');
+  
+   if (!reportTableBody || !modalTableBody) {
+      console.error("One or both table body elements are missing from the DOM.");
+      alert("Missing table body elements: " +
+            "reportTableBody: " + !!reportTableBody +
+            ", modalTableBody: " + !!modalTableBody);
+      return;
+    }
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    handle.addEventListener('mousedown', initResize);
+  });
+  
+    const tableHTML = data.map(row => `
+      <tr>
+        <td>${row.salesPerson}</td>
+        <td>${row.date}</td>
+        <td>${row.callType}</td>
+        <td>${row.region}</td>
+        <td>${row.city}</td>
+        <td>${row.customer}</td>
+        <td>${row.department}</td>
+        <td>${row.product}</td>
+        <td>${row.details}</td>
+        <td>${row.uploaded}</td>
+      </tr>
+    `).join('');
+  
+    reportTableBody.innerHTML = tableHTML;
+    modalTableBody.innerHTML  = tableHTML;
+  }
+  
+  function openTableModal() {
+    const tableModal = document.getElementById('tableModal');
+    if (tableModal) {
+      // Switch to flex for vertical/horizontal centering
+      tableModal.style.display = 'flex';
+    }
+  }
+  
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    handle.addEventListener('mousedown', initResize);
+  });
+  
+  function initResize(e) {
+    e.preventDefault();
+    const th = e.target.parentElement;
+    const startX = e.pageX;
+    const startWidth = th.offsetWidth;
+    
+    function doDrag(e) {
+      const newWidth = startWidth + (e.pageX - startX);
+      th.style.width = newWidth + 'px';
+    }
+    
+    function stopDrag() {
+      document.documentElement.removeEventListener('mousemove', doDrag, false);
+      document.documentElement.removeEventListener('mouseup', stopDrag, false);
+    }
+    
+    document.documentElement.addEventListener('mousemove', doDrag, false);
+    document.documentElement.addEventListener('mouseup', stopDrag, false);
+  }
+  
+  
+  /**
+   * Fetches data from the server and displays it in both tables.
+   */
+  function viewFilteredData() {
+    const fromDate = document.getElementById('reportFromDate').value;
+    const toDate = document.getElementById('reportToDate').value;
+    const spinner = document.getElementById('reportSpinner');
+  
+    // Instead of clearing the entire container, clear just the table bodies:
+    const reportTableBody = document.getElementById('reportTableBody');
+    const modalTableBody = document.getElementById('modalTableBody');
+    if (reportTableBody) reportTableBody.innerHTML = '';
+    if (modalTableBody) modalTableBody.innerHTML = '';
+  
     spinner.style.display = 'inline-block';
-
+  
     google.script.run
       .withSuccessHandler(function(rows) {
         spinner.style.display = 'none';
         if (!rows || rows.length === 0) {
-          resultsDiv.textContent = 'No data found for the selected range.';
+          // Optionally, you can set a message in the container:
+          document.getElementById('reportResults').textContent = 'No data found for the selected range.';
           return;
         }
-        // Build a simple table:
-        let html = '<table border="1" style="border-collapse: collapse;"><thead><tr>';
-        html += '<th>Sales Person</th><th>Date</th><th>Call Type</th><th>Region</th><th>City</th>';
-        html += '<th>Customer</th><th>Department</th><th>Product</th><th>Details</th><th>Uploaded</th>';
-        // add more columns if you want
-        html += '</tr></thead><tbody>';
-
-        rows.forEach(row => {
-          html += '<tr>';
-              html += `<td>${row[7] || ''}</td>`;
-              html += `<td>${row[1] || ''}</td>`;
-              html += `<td>${row[2] || ''}</td>`;
-              html += `<td>${row[3] || ''}</td>`;
-              html += `<td>${row[4] || ''}</td>`;
-              html += `<td>${row[5] || ''}</td>`;
-              html += `<td>${row[6] || ''}</td>`;
-              html += `<td>${row[8] || ''}</td>`;
-              html += `<td>${row[12] || ''}</td>`;
-              html += `<td>${row[17] || ''}</td>`;
-          html += '</tr>';
-        });
-        html += '</tbody></table>';
-        resultsDiv.innerHTML = html;
+        const rowObjects = convertRowsToObjects(rows);
+        displayReportData(rowObjects);
       })
       .withFailureHandler(function(err) {
         spinner.style.display = 'none';
         showCustomError('Failed to fetch data. ' + (err.message || ''));
       })
-      .getSalesPersonDataWithinRange(window.currentUser, fromDate, toDate);
+      .getSalesPersonDataWithinRange(window.currentUser, window.currentUserRole, fromDate, toDate);
   }
-
+  
+  /**
+   * Opens the full-screen table modal.
+   */
+  function openTableModal() {
+    const tableModal = document.getElementById('tableModal');
+    if (tableModal) tableModal.style.display = 'block';
+  }
+  
+  /**
+   * Closes the full-screen table modal.
+   */
+  function closeTableModal() {
+    const tableModal = document.getElementById('tableModal');
+    if (tableModal) tableModal.style.display = 'none';
+  }
+  
+  /* =========================================================
+   * 16) EXPORT FUNCTIONS (CSV)
+   * ========================================================= */
   function downloadFilteredData() {
     const fromDate = document.getElementById('reportFromDate').value;
-    const toDate   = document.getElementById('reportToDate').value;
-    const spinner  = document.getElementById('reportSpinner');
-
+    const toDate = document.getElementById('reportToDate').value;
+    const spinner = document.getElementById('reportSpinner');
+  
     if (!window.currentUser || !window.sessionToken) {
       showCustomError('You must be logged in to export data.');
       return;
     }
-
-    if (!confirm('Download CSV for the selected date range?')) {
-      return;
-    }
-
+    if (!confirm('Download CSV for the selected date range?')) return;
+  
     spinner.style.display = 'inline-block';
     google.script.run
       .withSuccessHandler(function(downloadUrl) {
@@ -1553,33 +1416,21 @@ function viewFilteredData() {
         spinner.style.display = 'none';
         showCustomError('Export error: ' + (err.message || ''));
       })
-      .exportSalesPersonDataWithinRangeAsCSV(
-        window.currentUser,  // salesPersonName
-        fromDate,
-        toDate,
-        window.currentUser,  // username
-        window.sessionToken  // token
-      );
+      .exportSalesPersonDataWithinRangeAsCSV(window.currentUser, fromDate, toDate, window.currentUser,window.currentUserRole, window.sessionToken);
   }
-
-  /* =====================================
-     EXPORT FUNCTIONS (CSV)
-     ===================================== */
+  
   function exportSalesData() {
     if (!window.currentUser || !window.sessionToken) {
       showCustomError('You must be logged in to export data.');
       return;
     }
-
-    if (!confirm('Are you sure you want to export your sales data?')) {
-      return;
-    }
+    if (!confirm('Are you sure you want to export your sales data?')) return;
     const exportBtn = document.getElementById('exportDataButton');
     if (exportBtn) {
       exportBtn.disabled = true;
       exportBtn.textContent = 'Exporting...';
     }
-
+  
     google.script.run
       .withSuccessHandler(function(downloadUrl) {
         if (downloadUrl) {
@@ -1601,6 +1452,59 @@ function viewFilteredData() {
           exportBtn.textContent = 'Export My Sales Data';
         }
       })
-      .exportSalesPersonDataAsCSV(window.currentUser, window.sessionToken);
+      .exportSalesPersonDataAsCSV(window.currentUser,window.currentUserRole, window.sessionToken);
   }
-</script>
+  
+  /* =========================================================
+   * HELPER FUNCTIONS
+   * ========================================================= */
+  
+  /**
+   * Closes a modal by its element ID.
+   */
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+  }
+  
+  /**
+   * Clears the password input fields.
+   */
+  function clearPasswordFields() {
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+  }
+  
+  /**
+   * Handler for forgot password reset.
+   */
+  function resetForgotPassword() {
+    const userInput = document.getElementById('resetEmailOrUsername').value.trim();
+    if (!userInput) {
+      showCustomError('Please enter your email or username.');
+      return;
+    }
+    const resetSpinner = document.getElementById('resetSpinner');
+    if (resetSpinner) resetSpinner.style.display = 'inline-block';
+  
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (resetSpinner) resetSpinner.style.display = 'none';
+        if (response.success) {
+          alert(response.message);
+          const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+          if (forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+        } else {
+          showCustomError(response.message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        if (resetSpinner) resetSpinner.style.display = 'none';
+        showCustomError('Error sending reset request.');
+      })
+      .forgotPassword(userInput);
+  }
+  
+  </script>
+  
