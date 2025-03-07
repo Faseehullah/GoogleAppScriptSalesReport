@@ -939,7 +939,7 @@ function getSalesPersonDataWithinRange(salesPersonName, role, fromDate, toDate) 
   }
 }
 
-function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate, username, token) {
+function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate, username, token,role) {
   try {
     // Validate session
     if (!sessionManager.validateSession(username, token)) {
@@ -963,7 +963,7 @@ function exportSalesPersonDataWithinRangeAsCSV(salesPersonName, fromDate, toDate
     userExportCounts[username] = uExport;
 
     // Filter data using the current user's role
-    const rows = getSalesPersonDataWithinRange(salesPersonName, window.currentUserRole, fromDate, toDate);
+    const rows = getSalesPersonDataWithinRange(salesPersonName, role, fromDate, toDate);
     if (!rows || rows.length === 0) {
       throw new Error('No data found for the specified range.');
     }

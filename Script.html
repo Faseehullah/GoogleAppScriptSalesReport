@@ -1270,20 +1270,18 @@
   /**
    * Populates both inline and modal tables with row data (as objects).
    */
+  
   function displayReportData(data) {
     const reportTableBody = document.getElementById('reportTableBody');
     const modalTableBody  = document.getElementById('modalTableBody');
   
-   if (!reportTableBody || !modalTableBody) {
+    if (!reportTableBody || !modalTableBody) {
       console.error("One or both table body elements are missing from the DOM.");
       alert("Missing table body elements: " +
             "reportTableBody: " + !!reportTableBody +
             ", modalTableBody: " + !!modalTableBody);
       return;
     }
-  document.querySelectorAll('.resize-handle').forEach(handle => {
-    handle.addEventListener('mousedown', initResize);
-  });
   
     const tableHTML = data.map(row => `
       <tr>
@@ -1300,21 +1298,21 @@
       </tr>
     `).join('');
   
+    // Update both inline and modal tables
     reportTableBody.innerHTML = tableHTML;
     modalTableBody.innerHTML  = tableHTML;
+  
+    // *** RE-ATTACH RESIZE EVENT LISTENERS AFTER RENDERING ***
+    attachResizeListeners();
   }
   
-  function openTableModal() {
-    const tableModal = document.getElementById('tableModal');
-    if (tableModal) {
-      // Switch to flex for vertical/horizontal centering
-      tableModal.style.display = 'flex';
-    }
+  // Helper function to attach the mousedown listener to all resize handles.
+  function attachResizeListeners() {
+    document.querySelectorAll('.resize-handle').forEach(handle => {
+      handle.addEventListener('mousedown', initResize);
+    });
   }
   
-  document.querySelectorAll('.resize-handle').forEach(handle => {
-    handle.addEventListener('mousedown', initResize);
-  });
   
   function initResize(e) {
     e.preventDefault();
@@ -1335,7 +1333,6 @@
     document.documentElement.addEventListener('mousemove', doDrag, false);
     document.documentElement.addEventListener('mouseup', stopDrag, false);
   }
-  
   
   /**
    * Fetches data from the server and displays it in both tables.
@@ -1416,8 +1413,12 @@
         spinner.style.display = 'none';
         showCustomError('Export error: ' + (err.message || ''));
       })
-      .exportSalesPersonDataWithinRangeAsCSV(window.currentUser, fromDate, toDate, window.currentUser,window.currentUserRole, window.sessionToken);
+      // Make sure to pass exactly five parameters.
+      .exportSalesPersonDataWithinRangeAsCSV(window.currentUser, fromDate, toDate, window.currentUser, window.sessionToken, window.currentUserRole);
+  
   }
+  
+  
   
   function exportSalesData() {
     if (!window.currentUser || !window.sessionToken) {

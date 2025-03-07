@@ -12,14 +12,13 @@
 </head>
 <body>
   <!-- =====================================
-       Header Section
+              Header Section
        ===================================== -->
   <header>
     <img src="https://nextekhealthcare.com/wp-content/uploads/2024/07/Logo-Red-Black-Png-1.png" alt="Company Logo">
     <h1>Nextek Healthcare - Sales Report Form</h1>
-    <div class="timestamp" id="timestamp">CURRENT DATE & TIME</div>
+    <div class="timestamp" id="timestamp">DATE & TIME</div>
   </header>
-
   <!-- =====================================
        Welcome Container (Displayed After Login)
        ===================================== -->
@@ -27,7 +26,6 @@
     <p id="welcomeMessage">Welcome, [Username]!</p>
     <img id="salesPersonAvatar" class="avatar" src="https://placehold.co/70x70" alt="Sales Person Avatar" style="display:none;">
   </div>
-
   <!-- =====================================
        Login Form (Visible Before Login)
        ===================================== -->
@@ -42,7 +40,6 @@
       <a href="#" id="forgotPasswordLink">Forgot Password?</a>
     </p>
   </div>
-
   <!-- =====================================
        Forgot Password Modal
        ===================================== -->
@@ -55,7 +52,6 @@
       <div class="spinner" id="resetSpinner" style="display:none;"></div>
     </div>
   </div>
-
   <!-- =====================================
        Main Form Container (Visible After Login)
        ===================================== -->
@@ -118,6 +114,10 @@
           <option value="TECHNICAL BRIEFING">TECHNICAL BRIEFING</option>
           <option value="FOLLOW UP">FOLLOW UP</option>
           <option value="PAYMENT ISSUE">PAYMENT ISSUE</option>
+          <option value="PAYMENT FOLLOW UP">PAYMENT FOLLOW UP</option>
+          <option value="SUPPLIES">SUPPLIES</option>
+          <option value="TENDER">TENDER</option>
+          <option value="OFFICE">OFFICE</option>
         </select>
       </div>
 
@@ -151,6 +151,11 @@
           <span class="loading-dots" id="customerLoading" style="display:none;">Loading...</span>
         </div>
       </div>
+
+      <div id="customerInfo" style="margin-bottom: 15px;">
+      <span id="selectedCustomerLabel" style="display:none; font-weight:bold;"></span>
+    <button type="button" id="changeCustomerBtn" class="btn btn-secondary" style="display:none;">Change Customer</button>
+    </div>
 
       <!-- If 'Add New Customer' is selected, show newCustomerField -->
       <div class="form-group" id="newCustomerField" style="display:none;">
@@ -399,16 +404,16 @@
     <table class="report-table">
       <thead>
         <tr>
-          <th>Sales Person<div class="resize-handle"></div></th>
-          <th>Date<div class="resize-handle"></div></th>
-          <th>Call Type<div class="resize-handle"></div></th>
-          <th>Region<div class="resize-handle"></div></th>
-          <th>City<div class="resize-handle"></div></th>
-          <th>Customer<div class="resize-handle"></div></th>
-          <th>Department<div class="resize-handle"></div></th>
-          <th>Product<div class="resize-handle"></div></th>
-          <th>Details<div class="resize-handle"></div></th>
-          <th>Uploaded<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Sales Person<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Date<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Call Type<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Region<div class="resize-handle"></div></th>
+          <th style="width: 100px;">City<div class="resize-handle"></div></th>
+          <th style="width: 250px;">Customer<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Department<div class="resize-handle"></div></th>
+          <th style="width: 250px;">Product<div class="resize-handle"></div></th>
+          <th style="width: 300px;">Details<div class="resize-handle"></div></th>
+          <th style="width: 150px;">Uploaded<div class="resize-handle"></div></th>
         </tr>
       </thead>
       <tbody id="reportTableBody">
@@ -435,16 +440,17 @@
       <table class="report-table">
         <thead>
           <tr>
-            <th>Sales Person<div class="resize-handle"></div></th>
-            <th>Date<div class="resize-handle"></div></th>
-            <th>Call Type<div class="resize-handle"></div></th>
-            <th>Region<div class="resize-handle"></div></th>
-            <th>City<div class="resize-handle"></div></th>
-            <th>Customer<div class="resize-handle"></div></th>
-            <th>Department<div class="resize-handle"></div></th>
-            <th>Product<div class="resize-handle"></div></th>
-            <th>Details<div class="resize-handle"></div></th>
-            <th>Uploaded<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Sales Person<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Date<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Call Type<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Region<div class="resize-handle"></div></th>
+          <th style="width: 100px;">City<div class="resize-handle"></div></th>
+          <th style="width: 250px;">Customer<div class="resize-handle"></div></th>
+          <th style="width: 100px;">Department<div class="resize-handle"></div></th>
+          <th style="width: 250px;">Product<div class="resize-handle"></div></th>
+          <th style="width: 300px;">Details<div class="resize-handle"></div></th>
+          <th style="width: 150px;">Uploaded<div class="resize-handle"></div></th>
+            
           </tr>
         </thead>
         <tbody id="modalTableBody">
